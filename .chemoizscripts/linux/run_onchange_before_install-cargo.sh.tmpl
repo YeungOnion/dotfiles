@@ -1,0 +1,26 @@
+{{ if eq .osid "linux-debian" "linux-raspbian" "linux-ubuntu" -}}
+{{ $plugins := list
+  "cargo-binstall"
+  "cargo-nextest" -}}
+
+{{ $packages := list
+  "git_branchless"
+  "delta"
+  "difft"
+  "git-cliff" -}}
+
+#!/usr/bin/dash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-toolchain stable -- component cargo --component clippy
+
+{{ range $plugins }}
+  cargo install --locked {{ . }}
+{{ end }}
+
+{{ range $packages }}
+  cargo binstall --locked {{ . }}
+{{ end }}
+
+
+{{ end }}
+
+
