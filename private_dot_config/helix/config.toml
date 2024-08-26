@@ -1,0 +1,40 @@
+theme = "snazzy"
+
+[editor]
+# true-color = true
+line-number = "relative"
+mouse = true
+shell = ["fish", "-C"]
+color-modes = true
+soft-wrap = {"enable" = true}
+
+[editor.lsp]
+display-messages = true
+
+[editor.file-picker]
+hidden = true
+git-ignore = false
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.whitespace.render]
+space = "none"
+tab = "all"
+nbsp = "all"
+newline = "none"
+
+[editor.indent-guides]
+render = true
+character = "┆"
+skip-levels = 1
+
+[keys.normal."`"]
+"ret" = ":run-shell-command make"
+c = ":run-shell-command cargo build"
+t = ":run-shell-command cargo test"
+
+[keys.insert]
+f = { d = "normal_mode" } # Maps `fd` to exit insert mode
