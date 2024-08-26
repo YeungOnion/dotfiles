@@ -1,0 +1,12 @@
+packages:
+  ubuntu:
+    packages:
+      - git
+      - tree
+      - trash-cli
+      - ripgrep
+      - fd-find
+      - bat
+      - fzf
+      - pipx
+      - helix
