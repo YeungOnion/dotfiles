@@ -1,6 +1,0 @@
-environment:
-  fish:
-    universal:
-      GITHUB_USERNAME: YeungOnion
-    global:
-      EDITOR: hx
