@@ -1,4 +1,4 @@
-{{ if and (eq .osid "linux-pop" "linux-ubuntu") (not .ephemeral) -}}
+{{ if and (eq .chezmoi.os "linux") (not .ephemeral) -}}
 
 #!/bin/sh
 
