@@ -1,7 +1,7 @@
 #!/bin/sh
-sudo apt-add-repository ppa:fish-shell/release-3 \
-  && sudo apt update \
-  && sudo apt upgrade \
+sudo apt-add-repository ppa:fish-shell/release-3 -y \
+  && sudo apt update -y \
+  && sudo apt upgrade -y \
   && sudo apt install fish -y
 
 ## initially copied from `twpayne/dotfiles:install.sh` by chezmoi author @twpayne on github
