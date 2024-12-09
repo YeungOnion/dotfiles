@@ -1,0 +1,22 @@
+{{- $packages := list
+  "py-spy"
+  "hatch"
+  "histoprint"
+  "jrnl"
+  "rename"
+  "ruff-lsp" -}}
+
+{{- $sudo := "sudo " -}}
+{{- if eq .chezmoi.username "root" -}}
+  {{-   $sudo = "" -}}
+{{- end -}}
+
+#!/usr/bin/sh
+
+{{ if not lookPath "uv" }}
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+{{ end }}
+
+{{ range $packages }}
+  {{ $sudo }}uv install -y {{ . }}
+{{ end }}

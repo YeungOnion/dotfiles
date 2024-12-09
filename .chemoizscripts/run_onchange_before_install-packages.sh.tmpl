@@ -1,0 +1,35 @@
+{{ $packages := list
+  "bat"
+  "btop"
+  "fd-find"
+  "fzf"
+  "git"
+  "helix"
+  "pipx"
+  "ripgrep"
+  "trash-cli"
+  "tree" -}}
+{{ $snaps := list -}}
+{{ $classicSnaps := list -}}
+
+{{ $sudo := "sudo " -}}
+{{ if eq .chezmoi.username "root" -}}
+{{   $sudo = "" -}}
+{{ end -}}
+
+#!/bin/sh
+
+set -eufo pipefail
+
+{{ $sudo }}add-apt-repository "ppa:maveonair/helix-editor" -y &&\
+{{ $sudo }}apt-get update -y &&\
+{{ $sudo }}apt-get install -y {{ $packages | join " " }}
+
+{{ if lookPath "snap" }}
+  {{   range $snaps }}
+  ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install {{ . }}
+  {{   end }}
+  {{   range $classicSnaps }}
+  ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install --classic {{ . }}
+  {{   end }}
+{{ end }}
