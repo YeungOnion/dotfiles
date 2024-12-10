@@ -1,0 +1,11 @@
+{{- $plugins := list
+  "golang"
+  "gleam"
+  "ruby" -}}
+
+
+{{ range $plugins }}
+  asdf plugin add {{ . }}
+{{ end }}
+
+asdf global golang latest
