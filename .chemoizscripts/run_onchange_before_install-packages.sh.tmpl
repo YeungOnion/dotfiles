@@ -9,7 +9,9 @@
   "ripgrep"
   "trash-cli"
   "tree" -}}
-{{ $snaps := list -}}
+{{ $snaps := list 
+  "docker"
+  "marksman" -}}
 {{ $classicSnaps := list -}}
 
 {{ $sudo := "sudo " -}}
@@ -17,19 +19,44 @@
 {{   $sudo = "" -}}
 {{ end -}}
 
-#!/bin/sh
-
+#!/bin/bash
 set -eufo pipefail
 
-{{ $sudo }}add-apt-repository "ppa:maveonair/helix-editor" -y &&\
-{{ $sudo }}apt-get update -y &&\
-{{ $sudo }}apt-get install -y {{ $packages | join " " }}
+standard_ppa_apt() {
+  {{ $sudo }}add-apt-repository "ppa:maveonair/helix-editor" -y
+  {{ $sudo }}apt-get update -y &&\
+  {{ $sudo }}apt-get install -y {{ $packages | join " " }}
 
-{{ if lookPath "snap" }}
-  {{   range $snaps }}
-  ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install {{ . }}
-  {{   end }}
-  {{   range $classicSnaps }}
-  ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install --classic {{ . }}
-  {{   end }}
-{{ end }}
+  return 0
+}
+
+gh_install() {
+  (type -p wget >/dev/null || ({{ $sudo }}apt update && {{ $sudo }}apt-get install wget -y)) \
+  	&& {{ $sudo }}mkdir -p -m 755 /etc/apt/keyrings \
+  	&& wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | {{ $sudo }}tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+  	&& {{ $sudo }}chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+  	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | {{ $sudo }}tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+  	&& {{ $sudo }}apt update \
+  	&& {{ $sudo }}apt install gh -y
+
+    return 0
+}
+
+asdf_install() {
+  git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
+
+  return 0
+}
+
+snap_install() {
+  {{ if lookPath "snap" }}
+    {{   range $snaps }}
+    ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install {{ . }}
+    {{   end }}
+    {{   range $classicSnaps }}
+    ( snap info {{ . }} | grep -q ^installed: ) || yes | {{ $sudo }}snap install --classic {{ . }}
+    {{   end }}
+  {{ end }}
+
+  return 0
+}

@@ -11,7 +11,8 @@
   {{-   $sudo = "" -}}
 {{- end -}}
 
-#!/usr/bin/sh
+#!/usr/bin/bash
+set -eufo pipefail
 
 {{ if not lookPath "uv" }}
   curl -LsSf https://astral.sh/uv/install.sh | sh

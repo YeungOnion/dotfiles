@@ -1,26 +1,32 @@
-{{ if eq .chezmoi.os "linux" -}}
 {{ $plugins := list
-  "cargo-binstall"
-  "cargo-nextest" -}}
+  "binstall"
+  "expand"
+  "hack"
+  "llvm-cov"
+  "nextest"
+  "release"
+  "shuttle"
+  "spellcheck"
+  "tauri" -}}
 
 {{ $packages := list
-  "git_branchless"
+  "git-branchless"
   "delta"
   "difft"
   "git-cliff" -}}
 
-#!/usr/bin/dash
+#!/usr/bin/bash
+set -eufo pipefail
+
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-toolchain stable -- component cargo --component clippy
 
+# install cargo-binstall
+curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
 {{ range $plugins }}
-  cargo install --locked {{ . }}
+  cargo binstall --locked {{ . }}
 {{ end }}
 
 {{ range $packages }}
   cargo binstall --locked {{ . }}
 {{ end }}
-
-
-{{ end }}
-
-
