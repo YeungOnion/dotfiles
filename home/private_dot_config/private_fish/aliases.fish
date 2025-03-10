@@ -4,6 +4,7 @@ abbr --add cat --position command "$bat_cmd -p --color never"
 abbr --add grep --position command rg -uu # like grep -R
 abbr --add rm --position command trash # try to use trash pls
 abbr --add g --position command git
+abbr --add gco --position command git checkout
 abbr --add sg --position command ast-grep
 
 alias bat "$bat_cmd --diff-context 5"
@@ -29,7 +30,11 @@ alias cp 'cp -i'
 alias mv 'mv -i'
 
 # typos
-alias sl ls
+abbr --add sl --position command ls
+
+# utils
+abbr .4dir --set-cursor="<+++>" "$(string join \n -- 'for dir i n */' 'pushd $dir' '<+++>' 'popd' 'end')"
+
 
 # tar is a monster
 abbr --add targzip --position command 'tar --create --gzip --verbose --file'
