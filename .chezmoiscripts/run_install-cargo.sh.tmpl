@@ -10,9 +10,9 @@
   "tauri" -}}
 
 {{ $packages := list
-  "git-branchless"
   "delta"
   "difft"
+  "git-branchless"
   "git-cliff" -}}
 
 #!/usr/bin/bash
@@ -24,7 +24,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-t
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
 {{ range $plugins }}
-  cargo binstall --locked {{ . }}
+  cargo binstall --locked cargo-{{ . }}
 {{ end }}
 
 {{ range $packages }}
