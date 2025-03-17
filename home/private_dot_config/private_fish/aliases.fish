@@ -1,13 +1,12 @@
 abbr --add jk --position command prevd
 abbr --add kj --position command nextd
-abbr --add cat --position command "$bat_cmd -p --color never"
+abbr --add cat --position command "$(command -s bat batcat)[-1] -p --color never"
 abbr --add grep --position command rg -uu # like grep -R
 abbr --add rm --position command trash # try to use trash pls
 abbr --add g --position command git
 abbr --add gco --position command git checkout
 abbr --add sg --position command ast-grep
 
-alias bat "$bat_cmd --diff-context 5"
 alias du 'du -h'
 alias mkdir 'mkdir -p'
 
