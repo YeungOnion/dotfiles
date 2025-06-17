@@ -1,0 +1,5 @@
+theme = dracula
+copy-on-select = clipboard
+
+font-family = "Cascadia Code"
+font-feature = -calt
