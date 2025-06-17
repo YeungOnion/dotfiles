@@ -37,4 +37,4 @@ c = ":run-shell-command cargo build"
 t = ":run-shell-command cargo test"
 
 [keys.insert]
-f = { d = "normal_mode" } # Maps `fd` to exit insert mode
+j = { k = "normal_mode" }
