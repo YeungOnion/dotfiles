@@ -12,8 +12,10 @@ soft-wrap = {"enable" = true}
 display-messages = true
 
 [editor.file-picker]
-hidden = true
+hidden = false
 git-ignore = false
+git-exclude = false
+# ignore = true
 
 [editor.cursor-shape]
 insert = "bar"
