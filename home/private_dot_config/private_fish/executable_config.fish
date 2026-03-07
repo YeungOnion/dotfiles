@@ -34,11 +34,13 @@ if status is-interactive
         --exclude="**/build/*" --exclude="**/{.mypy,.ruff}_cache/*" \
         --exclude="**/.git/{objects,refs,logs}/*" \
         --exclude="**/.pixi/env/*"
+    set -gx fzf_git_log_opts --preview-window "down,70%"
     set -gx EDITOR hx
 
     if test -f ~/.asdf/asdf.fish
         source ~/.asdf/asdf.fish
-        echo "`asdf' not found, not loading it" &>2
+    else
+        echo "`asdf' not found, not loading it" >&2
     end
 
     fish_add_path $RUSTUP_HOME/bin $CARGO_HOME/bin $GOPATH/bin $HOME/.local/bin $HOME/.pixi/bin
