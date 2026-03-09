@@ -37,21 +37,14 @@ if status is-interactive
     set -gx fzf_git_log_opts --preview-window "down,70%"
     set -gx EDITOR hx
 
-    if test -f ~/.asdf/asdf.fish
-        source ~/.asdf/asdf.fish
-    else
-        echo "`asdf' not found, not loading it" >&2
-    end
-
     fish_add_path $RUSTUP_HOME/bin $CARGO_HOME/bin $GOPATH/bin $HOME/.local/bin $HOME/.pixi/bin
     source $__fish_config_dir/aliases.fish
 
     # projects
-    direnv hook fish | source
-    mise activate fish | source
-end
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/onion/packages/google-cloud-sdk/path.fish.inc' ]
-    . '/Users/onion/packages/google-cloud-sdk/path.fish.inc'
+    command -q direnv && direnv hook fish | source \
+        || echo '`direnv` not available.' \
+        'See https://direnv.net/docs/installation.html'
+    command -q mise && mise activate fish | source \
+        || echo '`direnv` not available.' \
+        'See https://mise.jdx.dev/installing-mise.html'
 end
