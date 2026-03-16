@@ -42,12 +42,6 @@ gh_install() {
     return 0
 }
 
-asdf_install() {
-  git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.1
-
-  return 0
-}
-
 snap_install() {
   {{ if lookPath "snap" }}
     {{   range $snaps }}
