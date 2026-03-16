@@ -1,15 +1,10 @@
-{{- $packages := list
+{{- $uv_packages := list
   "py-spy"
   "hatch"
   "histoprint"
   "jrnl"
   "rename"
   "ruff-lsp" -}}
-
-{{- $sudo := "sudo " -}}
-{{- if eq .chezmoi.username "root" -}}
-  {{-   $sudo = "" -}}
-{{- end -}}
 
 #!/usr/bin/bash
 set -eufo pipefail
@@ -18,6 +13,10 @@ set -eufo pipefail
   curl -LsSf https://astral.sh/uv/install.sh | sh
 {{ end }}
 
-{{ range $packages }}
-  {{ $sudo }}uv install -y {{ . }}
+{{ if not lookPath "pixi" }}
+  curl -fsSL https://pixi.sh/install.sh | sh
+{{ end }}
+
+{{ range $uv_packages }}
+  uv tool install {{ . }}
 {{ end }}
