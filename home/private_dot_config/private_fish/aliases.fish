@@ -8,6 +8,7 @@ abbr --add gco --position command git checkout
 abbr --add sg --position command ast-grep
 abbr --add tree --position command tree --gitignore
 abbr --add glow --position command glow --pager
+abbr --add ardo --position command arduino-cli
 
 alias du 'du -h'
 alias mkdir 'mkdir -p'
