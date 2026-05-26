@@ -15,7 +15,6 @@ if status is-interactive
     set fd_cmd (command -s fd || command -s fdfind)
     set -g FZF_DEFAULT_COMMAND $fd_cmd
     set -g FZF_DEFAULT_OPTS --ansi
-    fzf_configure_bindings --directory='super-p'
 
     # pager related
     if command -s bat batcat
