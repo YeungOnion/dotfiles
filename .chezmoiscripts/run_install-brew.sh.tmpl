@@ -1,0 +1,24 @@
+#!/bin/bash
+
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+set -eufo pipefail
+
+{{- $brew_bin := "/usr/local/bin/brew" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   if eq .chezmoi.arch "arm64" -}}
+{{-     $brew_bin = "/opt/homebrew/bin/brew" -}}
+{{-   end -}}
+{{- else if eq .chezmoi.os "linux" -}}
+{{-   $brew_bin = "/home/linuxbrew/.linuxbrew/bin/brew" -}}
+{{- end -}}
+
+{{ $packages := list
+  "xclip"
+  "pcre2"
+  "jj"
+  "fish" -}}
+
+{{ range $packages }}
+  {{$brew_bin}} install {{ . }}
+{{ end }}
