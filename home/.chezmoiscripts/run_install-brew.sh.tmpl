@@ -17,7 +17,12 @@ set -eufo pipefail
   "xclip"
   "pcre2"
   "jj"
-  "fish" -}}
+  "fish"
+  "slides"
+  "bat"
+  "bat-extras-batman"
+  "btop"
+  "hurl" -}}
 
 {{ range $packages }}
   {{$brew_bin}} install {{ . }}
