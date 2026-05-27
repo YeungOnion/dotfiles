@@ -8,11 +8,10 @@ if [[ -z "$INTERVIEW_FILE" ]]; then
   exit 1
 fi
 
-# Get elapsed time
-ELAPSED_MINUTES=$(/home/orion/.agents/skills/interview-me/interview_elapsed.sh)
+SKILL_DIR=$(dirname "$(realpath "$0")")
 
-# Read YAML frontmatter
-FRONTMATTER=$(yq e '.' "$INTERVIEW_FILE" | head -n -1)
+# Get elapsed time
+ELAPSED_MINUTES=$("$SKILL_DIR/interview_elapsed.sh")
 
 # Generate final report
 REPORT=$(cat <<EOF

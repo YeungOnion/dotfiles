@@ -8,8 +8,10 @@ WRITEUP_PATH="$2"
 POSTING_PATH="$3"
 DURATION="${4:-15}" # Default to 15 minutes if not provided
 
+SKILL_DIR=$(dirname "$(realpath "$0")")
+
 # Source the interview_env.sh to get INTERVIEWS_DIR
-source /home/orion/.agents/skills/interview-me/interview_env.sh
+source "$SKILL_DIR/interview_env.sh"
 
 # Generate a slug from the title
 SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9\s-]/-/g' | sed 's/--+/-/g' | sed 's/^-//' | sed 's/-$//')

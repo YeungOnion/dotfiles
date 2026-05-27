@@ -12,8 +12,10 @@ if [[ -z "$INTERVIEW_FILE" ]]; then
   exit 1
 fi
 
+SKILL_DIR=$(dirname "$(realpath "$0")")
+
 # Get elapsed time
-ELAPSED_MINUTES=$(/home/orion/.agents/skills/interview-me/interview_elapsed.sh)
+ELAPSED_MINUTES=$("$SKILL_DIR/interview_elapsed.sh")
 
 # Append note to the interview file
 echo "[$(printf "%.1f" "$ELAPSED_MINUTES")m][$TAG] $MESSAGE" >> "$INTERVIEW_FILE"

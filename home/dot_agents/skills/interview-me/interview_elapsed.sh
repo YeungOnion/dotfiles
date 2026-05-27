@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Calculate elapsed time in minutes since the start of the interview
-START_TIME=$(yq '.start' "$INTERVIEW_FILE")
+START_TIME=$(grep '^start:' "$INTERVIEW_FILE" | sed 's/^start:[[:space:]]*//')
 CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%S.%6N)
 
 START_SECONDS=$(date -d "$START_TIME" +%s%N)
