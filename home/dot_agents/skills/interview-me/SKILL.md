@@ -1,3 +1,8 @@
+---
+name: interview-me
+description: conduct a mock interview through the chat session and produce structured notes for the user/candidate to consume as feedback.
+---
+
 # interview-me
 
 Simulate a realistic technical interview. Maintains two parallel tracks: a visible chat conversation and hidden timestamped interviewer notes. Interviewer decides when to wrap up based on elapsed time (default: 15 minutes).
