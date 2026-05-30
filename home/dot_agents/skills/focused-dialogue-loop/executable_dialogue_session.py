@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-import sys
-import json
-import fcntl
 import argparse
-from dataclasses import dataclass, field, asdict
-from enum import StrEnum
+from copy import deepcopy
+import fcntl
+import json
+import sys
+from collections.abc import Callable, Collection, Generator, Iterator
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Set, Dict, Optional, Tuple
+from enum import StrEnum
+from itertools import chain
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 
 class EventType(StrEnum):
@@ -18,197 +22,300 @@ class EventType(StrEnum):
     INIT = "init"
 
 
-@dataclass(frozen=True)
+class Op:
+    def __init__(self, arg):
+        self.inner = deepcopy(arg)
+
+    @staticmethod
+    def do(ops: list["Op"], state_file: Path, log_file: Path) -> int:
+        code = 0
+        for op in ops:
+            result = Op._do(op, state_file, log_file)
+            if result is not None:
+                code = result
+        return code
+
+    @staticmethod
+    def _do(op: "Op", state_file: Path, log_file: Path) -> int | None:
+        if isinstance(op, UpdateOp):
+            append_state(state_file, op.inner)
+        elif isinstance(op, LogOp):
+            append_log(log_file, op.inner)
+        elif isinstance(op, PrintOp):
+            print(op.inner)
+        elif isinstance(op, ExitOp):
+            return op.inner
+        return None
+
+
+class UpdateOp(Op):
+    pass
+
+
+class LogOp(Op):
+    pass
+
+
+class PrintOp(Op):
+    pass
+
+
+class ExitOp(Op):
+    pass
+
+
+class QuestionState(StrEnum):
+    TODO = "todo"
+    DONE = "done"
+    CANCELED = "canceled"
+
+
+type Theme = str
+
+
+@dataclass(frozen=True, unsafe_hash=True)
 class Question:
-    theme: str
-    upstreams: Tuple[str, ...] = field(default_factory=tuple)
+    theme: Theme
+    upstreams: tuple["Question", ...] = field(
+        default_factory=tuple, hash=False, compare=False
+    )
+
+    def all_children(self) -> list["Question"]:
+        return list(self.traverse(iter([self]), []))
+
+    @staticmethod
+    def traverse(
+        rem: Iterator["Question"], total: Collection["Question"]
+    ) -> Generator["Question"]:
+        _sentinel = object()
+        head = next(rem, _sentinel)
+
+        if head is _sentinel:
+            yield from total
+            return
+        if TYPE_CHECKING:
+            head = cast("Question", head)
+
+        yield from Question.traverse(chain(head.upstreams, rem), set(total) | {head})
 
 
 class DialogueState:
     def __init__(self):
-        self.todo: Dict[str, Question] = {}
-        self.done: Set[str] = set()
-        self.canceled: Set[str] = set()
+        self.todo: set[Question] = set()
+        self.done: set[Theme] = set()
+        self.canceled: set[Theme] = set()
 
-    def ask(self, theme: str):
+    def _seen_in(self, theme: Theme) -> QuestionState | None:
+        # Fixed structural comparison: self.todo stores Question instances
+        if any(q.theme == theme for q in self.todo):
+            return QuestionState.TODO
+        if theme in self.done:
+            return QuestionState.DONE
+        if theme in self.canceled:
+            return QuestionState.CANCELED
+        return None
+
+    @staticmethod
+    def collect_delta(events: Collection[dict]) -> "DialogueState":
+        s = DialogueState()
+        for e in events:
+            s._mutate(e)
+        return s
+
+    def _mutate(self, event: dict):
+        etype = event.get("event")
+        theme = str(event.get("theme"))
+        if etype == EventType.ASK:
+            self.ask(theme)
+        elif etype == EventType.DEFER:
+            # Map incoming upstream strings to instantiated Question instances
+            upstreams_raw = event.get("upstreams", [])
+            upstreams = [Question(theme=str(u)) for u in upstreams_raw]
+            self.defer(theme, upstreams)
+        elif etype == EventType.RESOLVE:
+            self.resolve(theme)
+        elif etype == EventType.CANCEL:
+            self.cancel(theme)
+
+    def ask(self, theme: Theme):
         if theme not in self.done and theme not in self.canceled:
-            self.todo[theme] = Question(theme=theme)
+            self.todo.add(Question(theme=theme))
 
-    def defer(self, theme: str, upstreams: List[str]):
-        # BFS-like insertion: target theme and all upstreams go to TODO
-        # if they aren't already resolved or canceled.
-        all_themes = [theme] + upstreams
-        for t in all_themes:
-            if t not in self.done and t not in self.canceled:
-                # For defer, we record the upstreams for the main theme
-                if t == theme:
-                    self.todo[t] = Question(theme=t, upstreams=tuple(upstreams))
-                elif t not in self.todo:
-                    self.todo[t] = Question(theme=t)
+    def defer(self, t: Theme, upstreams: Collection[Question]):
+        upstreams = tuple(upstreams)
+        self.todo.add(Question(theme=t, upstreams=upstreams))
 
-    def resolve(self, theme: str):
-        if theme in self.todo:
-            self.todo.pop(theme)
-        self.done.add(theme)
+        if not upstreams:
+            return
 
-    def cancel(self, theme: str):
-        if theme in self.todo:
-            self.todo.pop(theme)
-        self.canceled.add(theme)
+        for q in Question.traverse(iter(upstreams), []):
+            match self._seen_in(q.theme):
+                case QuestionState.TODO:
+                    self.todo.add(q)
+                case QuestionState.DONE:
+                    self.done.add(q.theme)
+                case QuestionState.CANCELED:
+                    self.canceled.add(q.theme)
+
+    def resolve(self, t: Theme):
+        if any(q.theme == t for q in self.todo):
+            self.todo.remove(Question(theme=t))
+        self.done.add(t)
+
+    def cancel(self, t: Theme):
+        if any(q.theme == t for q in self.todo):
+            self.todo.remove(Question(theme=t))
+        self.canceled.add(t)
 
     def to_dict(self):
         return {
-            "todo": {k: list(v.upstreams) for k, v in self.todo.items()},
-            "done": list(self.done),
-            "canceled": list(self.canceled),
+            QuestionState.TODO: {
+                q.theme: [u.theme for u in q.upstreams] for q in self.todo
+            },
+            QuestionState.DONE: list(self.done),
+            QuestionState.CANCELED: list(self.canceled),
         }
 
 
-def get_filenames(agent_uuid: str) -> Tuple[str, str]:
-    safe_uuid = "-".join(
+def get_filenames(agent_uuid: str) -> tuple[Path, Path]:
+    safe_uuid = "".join(
         c for c in agent_uuid.replace("_", "-") if c.isalnum() or c in "-"
+    ).strip("-")
+    return (
+        Path(f".session_state_{safe_uuid}.jsonl"),
+        Path(f".session_notes_{safe_uuid}.md"),
     )
-    return f".session_state_{safe_uuid}.jsonl", f".session_notes_{safe_uuid}.md"
 
 
-def append_state(filename: str, event: dict):
-    """Atomic POSIX append for JSONL."""
+def append_state(filename: Path, event: dict):
+    """Atomic POSIX append using standard text flushing."""
     line = json.dumps(event) + "\n"
-    with open(filename, "a", buffering=0) as f:
+    with open(filename, "a", encoding="utf-8") as f:
         f.write(line)
+        f.flush()
 
 
-def append_log(filename: str, content: str):
-    """Atomic POSIX append for Markdown."""
-    with open(filename, "a", buffering=0) as f:
+def append_log(filename: Path, content: str):
+    """Atomic POSIX append using standard text flushing."""
+    with open(filename, "a", encoding="utf-8") as f:
         f.write(content)
+        f.flush()
 
 
-def reconcile_state(filename: str) -> DialogueState:
-    state = DialogueState()
+def read_updates(filename: Path) -> list[dict]:
+    # Fixed: Prevent FileNotFoundError on fresh operations
+    if not filename.exists():
+        return []
+
+    with open(filename, "r", encoding="utf-8") as f:
+        fcntl.flock(f, fcntl.LOCK_SH)
+        lines = f.readlines()
+        fcntl.flock(f, fcntl.LOCK_UN)
+
+    return [json.loads(line) for line in lines if line.strip()]
+
+
+def cli_ask(args, state_file, timestamp):
+    event = {
+        "event": EventType.ASK,
+        "theme": args.key,
+        "motive": args.motive,
+        "timestamp": timestamp,
+    }
+    log_entry = f"* **[ASK: {args.key}]**"
+    if args.motive:
+        log_entry += f" (Motive: {args.motive})"
+    log_entry += "\n"
+    return [UpdateOp(event), LogOp(log_entry)]
+
+
+def cli_defer(args, state_file, timestamp):
     try:
-        with open(filename, "r") as f:
-            # Locking for read to ensure we see a consistent state
-            fcntl.flock(f, fcntl.LOCK_SH)
-            for line in f:
-                if not line.strip():
-                    continue
-                event = json.loads(line)
-                etype = event.get("event")
-                theme = event.get("theme")
-                if etype == EventType.ASK:
-                    state.ask(theme)
-                elif etype == EventType.DEFER:
-                    state.defer(theme, event.get("upstreams", []))
-                elif etype == EventType.RESOLVE:
-                    state.resolve(theme)
-                elif etype == EventType.CANCEL:
-                    state.cancel(theme)
-            fcntl.flock(f, fcntl.LOCK_UN)
-    except FileNotFoundError:
-        pass
-    return state
+        upstreams = json.loads(args.upstreams)
+    except json.JSONDecodeError:
+        upstreams = []
+    event = {
+        "event": EventType.DEFER,
+        "theme": args.key,
+        "upstreams": upstreams,
+        "motive": args.motive,
+        "timestamp": timestamp,
+    }
+    return [UpdateOp(event)]
+
+
+def cli_note(args, state_file, timestamp):
+    log_entry = f"* **[NOTE: {args.key}]** {args.msg}\n"
+    return [LogOp(log_entry)]
+
+
+def cli_resolve(args, state_file, timestamp):
+    event = {"event": EventType.RESOLVE, "theme": args.key, "timestamp": timestamp}
+    return [UpdateOp(event)]
+
+
+def cli_cancel(args, state_file, timestamp):
+    event = {"event": EventType.CANCEL, "theme": args.key, "timestamp": timestamp}
+    updates = read_updates(state_file)
+    state = DialogueState.collect_delta(updates + [event])
+    out = json.dumps({"todo": list(map(lambda q: q.theme, state.todo))}, indent=2)
+
+    return [UpdateOp(event), PrintOp(out)]
+
+
+def cli_summarize(args, state_file, timestamp):
+    state = DialogueState.collect_delta(read_updates(state_file))
+    open_themes = [q.theme for q in state.todo]
+    out = json.dumps({"todo": open_themes}, indent=2)
+    ops: list[Op] = [PrintOp(out)]
+    if args.close and open_themes:
+        ops.append(ExitOp(1))
+    return ops
 
 
 def main():
     parser = argparse.ArgumentParser(description="Focused Dialogue Session Manager")
     parser.add_argument("--uuid", required=True, help="Agent UUID")
-    
+
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # ask <key> [--motive=<motive>]
     ask_p = subparsers.add_parser("ask")
     ask_p.add_argument("key")
     ask_p.add_argument("--motive")
 
-    # defer <key> [upstreams_json] [--motive=<motive>]
     defer_p = subparsers.add_parser("defer")
     defer_p.add_argument("key")
     defer_p.add_argument("upstreams", nargs="?", default="[]")
     defer_p.add_argument("--motive")
 
-    # note <key> <msg>
     note_p = subparsers.add_parser("note")
     note_p.add_argument("key")
     note_p.add_argument("msg")
 
-    # resolve <key>
     resolve_p = subparsers.add_parser("resolve")
     resolve_p.add_argument("key")
 
-    # view
-    subparsers.add_parser("view")
-
-    # cancel <key>
     cancel_p = subparsers.add_parser("cancel")
     cancel_p.add_argument("key")
 
-    # summarize
-    subparsers.add_parser("summarize")
+    summarize_p = subparsers.add_parser("summarize")
+    summarize_p.add_argument("--close", action="store_true", help="Exit non-zero if open topics remain")
 
     args = parser.parse_args()
     state_file, log_file = get_filenames(args.uuid)
 
     timestamp = datetime.now().isoformat()
 
-    if args.command == "ask":
-        event = {"event": EventType.ASK, "theme": args.key, "motive": args.motive, "timestamp": timestamp}
-        append_state(state_file, event)
-        log_entry = f"* **[ASK: {args.key}]**"
-        if args.motive:
-            log_entry += f" (Motive: {args.motive})"
-        log_entry += "\n"
-        append_log(log_file, log_entry)
-        sys.exit(0)
-
-    elif args.command == "defer":
-        try:
-            upstreams = json.loads(args.upstreams)
-        except json.JSONDecodeError:
-            upstreams = []
-        event = {
-            "event": EventType.DEFER,
-            "theme": args.key,
-            "upstreams": upstreams,
-            "motive": args.motive,
-            "timestamp": timestamp
-        }
-        append_state(state_file, event)
-        log_entry = f"* **[DEFER: {args.key}]**"
-        if upstreams:
-            log_entry += f" Upstreams: {', '.join(upstreams)}"
-        if args.motive:
-            log_entry += f" (Motive: {args.motive})"
-        log_entry += "\n"
-        append_log(log_file, log_entry)
-        sys.exit(0)
-
-    elif args.command == "note":
-        log_entry = f"* **[NOTE: {args.key}]** {args.msg}\n"
-        append_log(log_file, log_entry)
-        sys.exit(0)
-
-    elif args.command == "resolve":
-        event = {"event": EventType.RESOLVE, "theme": args.key, "timestamp": timestamp}
-        append_state(state_file, event)
-        sys.exit(0)
-
-    elif args.command == "view":
-        state = reconcile_state(state_file)
-        print(json.dumps(state.to_dict(), indent=2))
-        sys.exit(0)
-
-    elif args.command == "cancel":
-        event = {"event": EventType.CANCEL, "theme": args.key, "timestamp": timestamp}
-        append_state(state_file, event)
-        state = reconcile_state(state_file)
-        print(json.dumps({"todo": list(state.todo.keys())}, indent=2))
-        sys.exit(0)
-
-    elif args.command == "summarize":
-        state = reconcile_state(state_file)
-        print(json.dumps({"todo": list(state.todo.keys())}, indent=2))
-        sys.exit(0)
+    cmds: dict[str, Callable[[dict, Path, datetime], list[Op]]] = {
+        "ask": cli_ask,
+        "defer": cli_defer,
+        "note": cli_note,
+        "resolve": cli_resolve,
+        "cancel": cli_cancel,
+        "summarize": cli_summarize,
+    }
+    ops = cmds[args.command](args, state_file, timestamp)
+    sys.exit(Op.do(ops, state_file, log_file))
 
 
 if __name__ == "__main__":
