@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import StrEnum
 from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, assert_never, cast
 
 
 class EventType(StrEnum):
@@ -26,26 +26,11 @@ class Op:
     def __init__(self, arg):
         self.inner = deepcopy(arg)
 
-    @staticmethod
-    def do(ops: list["Op"], state_file: Path, log_file: Path) -> int:
-        code = 0
-        for op in ops:
-            result = Op._do(op, state_file, log_file)
-            if result is not None:
-                code = result
-        return code
+    def __eq__(self, other: object) -> bool:
+        return type(self) is type(other) and self.inner == other.inner  # type: ignore[union-attr]
 
-    @staticmethod
-    def _do(op: "Op", state_file: Path, log_file: Path) -> int | None:
-        if isinstance(op, UpdateOp):
-            append_state(state_file, op.inner)
-        elif isinstance(op, LogOp):
-            append_log(log_file, op.inner)
-        elif isinstance(op, PrintOp):
-            print(op.inner)
-        elif isinstance(op, ExitOp):
-            return op.inner
-        return None
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({self.inner!r})"
 
 
 class UpdateOp(Op):
@@ -60,8 +45,24 @@ class PrintOp(Op):
     pass
 
 
-class ExitOp(Op):
-    pass
+type AnyOp = UpdateOp | LogOp | PrintOp
+
+
+def _execute_op(op: AnyOp, state_file: Path, log_file: Path) -> None:
+    match op:
+        case UpdateOp():
+            append_state(state_file, op.inner)
+        case LogOp():
+            append_log(log_file, op.inner)
+        case PrintOp():
+            print(op.inner)
+        case _ as unreachable:
+            assert_never(unreachable)
+
+
+def execute_ops(ops: list[AnyOp], state_file: Path, log_file: Path) -> None:
+    for op in ops:
+        _execute_op(op, state_file, log_file)
 
 
 class QuestionState(StrEnum):
@@ -73,7 +74,7 @@ class QuestionState(StrEnum):
 type Theme = str
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class Question:
     theme: Theme
     upstreams: tuple["Question", ...] = field(
@@ -106,7 +107,6 @@ class DialogueState:
         self.canceled: set[Theme] = set()
 
     def _seen_in(self, theme: Theme) -> QuestionState | None:
-        # Fixed structural comparison: self.todo stores Question instances
         if any(q.theme == theme for q in self.todo):
             return QuestionState.TODO
         if theme in self.done:
@@ -123,19 +123,19 @@ class DialogueState:
         return s
 
     def _mutate(self, event: dict):
-        etype = event.get("event")
         theme = str(event.get("theme"))
-        if etype == EventType.ASK:
-            self.ask(theme)
-        elif etype == EventType.DEFER:
-            # Map incoming upstream strings to instantiated Question instances
-            upstreams_raw = event.get("upstreams", [])
-            upstreams = [Question(theme=str(u)) for u in upstreams_raw]
-            self.defer(theme, upstreams)
-        elif etype == EventType.RESOLVE:
-            self.resolve(theme)
-        elif etype == EventType.CANCEL:
-            self.cancel(theme)
+        match EventType(event.get("event")):
+            case EventType.ASK:
+                self.ask(theme)
+            case EventType.DEFER:
+                upstreams = [Question(theme=str(u)) for u in event.get("upstreams", [])]
+                self.defer(theme, upstreams)
+            case EventType.RESOLVE:
+                self.resolve(theme)
+            case EventType.CANCEL:
+                self.cancel(theme)
+            case EventType.NOTE | EventType.INIT:
+                pass
 
     def ask(self, theme: Theme):
         if theme not in self.done and theme not in self.canceled:
@@ -188,7 +188,6 @@ def get_filenames(agent_uuid: str) -> tuple[Path, Path]:
 
 
 def append_state(filename: Path, event: dict):
-    """Atomic POSIX append using standard text flushing."""
     line = json.dumps(event) + "\n"
     with open(filename, "a", encoding="utf-8") as f:
         f.write(line)
@@ -196,14 +195,12 @@ def append_state(filename: Path, event: dict):
 
 
 def append_log(filename: Path, content: str):
-    """Atomic POSIX append using standard text flushing."""
     with open(filename, "a", encoding="utf-8") as f:
         f.write(content)
         f.flush()
 
 
 def read_updates(filename: Path) -> list[dict]:
-    # Fixed: Prevent FileNotFoundError on fresh operations
     if not filename.exists():
         return []
 
@@ -215,7 +212,10 @@ def read_updates(filename: Path) -> list[dict]:
     return [json.loads(line) for line in lines if line.strip()]
 
 
-def cli_ask(args, state_file, timestamp):
+type Handler = Callable[[argparse.Namespace, list[dict], str], tuple[list[AnyOp], int]]
+
+
+def cli_ask(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
     event = {
         "event": EventType.ASK,
         "theme": args.key,
@@ -226,10 +226,10 @@ def cli_ask(args, state_file, timestamp):
     if args.motive:
         log_entry += f" (Motive: {args.motive})"
     log_entry += "\n"
-    return [UpdateOp(event), LogOp(log_entry)]
+    return [UpdateOp(event), LogOp(log_entry)], 0
 
 
-def cli_defer(args, state_file, timestamp):
+def cli_defer(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
     try:
         upstreams = json.loads(args.upstreams)
     except json.JSONDecodeError:
@@ -241,36 +241,32 @@ def cli_defer(args, state_file, timestamp):
         "motive": args.motive,
         "timestamp": timestamp,
     }
-    return [UpdateOp(event)]
+    return [UpdateOp(event)], 0
 
 
-def cli_note(args, state_file, timestamp):
+def cli_note(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
     log_entry = f"* **[NOTE: {args.key}]** {args.msg}\n"
-    return [LogOp(log_entry)]
+    return [LogOp(log_entry)], 0
 
 
-def cli_resolve(args, state_file, timestamp):
+def cli_resolve(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
     event = {"event": EventType.RESOLVE, "theme": args.key, "timestamp": timestamp}
-    return [UpdateOp(event)]
+    return [UpdateOp(event)], 0
 
 
-def cli_cancel(args, state_file, timestamp):
+def cli_cancel(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
     event = {"event": EventType.CANCEL, "theme": args.key, "timestamp": timestamp}
-    updates = read_updates(state_file)
-    state = DialogueState.collect_delta(updates + [event])
-    out = json.dumps({"todo": list(map(lambda q: q.theme, state.todo))}, indent=2)
-
-    return [UpdateOp(event), PrintOp(out)]
+    state = DialogueState.collect_delta(events + [event])
+    out = json.dumps({"todo": [q.theme for q in state.todo]}, indent=2)
+    return [UpdateOp(event), PrintOp(out)], 0
 
 
-def cli_summarize(args, state_file, timestamp):
-    state = DialogueState.collect_delta(read_updates(state_file))
+def cli_summarize(args: argparse.Namespace, events: list[dict], timestamp: str) -> tuple[list[AnyOp], int]:
+    state = DialogueState.collect_delta(events)
     open_themes = [q.theme for q in state.todo]
     out = json.dumps({"todo": open_themes}, indent=2)
-    ops: list[Op] = [PrintOp(out)]
-    if args.close and open_themes:
-        ops.append(ExitOp(1))
-    return ops
+    code = 1 if args.close and open_themes else 0
+    return [PrintOp(out)], code
 
 
 def main():
@@ -303,10 +299,10 @@ def main():
 
     args = parser.parse_args()
     state_file, log_file = get_filenames(args.uuid)
-
+    events = read_updates(state_file)
     timestamp = datetime.now().isoformat()
 
-    cmds: dict[str, Callable[[dict, Path, datetime], list[Op]]] = {
+    cmds: dict[str, Handler] = {
         "ask": cli_ask,
         "defer": cli_defer,
         "note": cli_note,
@@ -314,8 +310,9 @@ def main():
         "cancel": cli_cancel,
         "summarize": cli_summarize,
     }
-    ops = cmds[args.command](args, state_file, timestamp)
-    sys.exit(Op.do(ops, state_file, log_file))
+    ops, code = cmds[args.command](args, events, timestamp)
+    execute_ops(ops, state_file, log_file)
+    sys.exit(code)
 
 
 if __name__ == "__main__":
