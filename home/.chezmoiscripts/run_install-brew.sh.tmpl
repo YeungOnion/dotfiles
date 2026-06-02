@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eufo pipefail
+set -ufo pipefail
 
 {{- $brew_bin := "/usr/local/bin/brew" -}}
 {{- if eq .chezmoi.os "darwin" -}}
