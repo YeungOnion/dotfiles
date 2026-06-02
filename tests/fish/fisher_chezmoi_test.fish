@@ -8,6 +8,14 @@ set -g _chezmoiignore $_chezmoi_src/.chezmoiignore
 
 source ~/.config/fish/conf.d/fisher_chezmoi_sync.fish 2>/dev/null
 
+# ── shell health ──────────────────────────────────────────────────────────────
+
+@echo "shell health"
+
+set -l _stderr (fish -c exit 2>&1)
+@test "fish starts without stderr" \
+    (count $_stderr) = 0
+
 # ── structure after chezmoi apply ────────────────────────────────────────────
 
 @echo "chezmoi apply: expected files present"
@@ -57,9 +65,9 @@ _fisher_sync_chezmoiignore
 
 set -l ignore_block (awk '/^# fisher:begin/{p=1; next} /^# fisher:end/{p=0} p' $_chezmoiignore)
 
-# fish_prompt.fish is chezmoi-managed (in source), so should not appear in the fisher block
-@test "chezmoi-managed fish_prompt.fish not in fisher block" \
-    (string match -q '*.config/fish/functions/fish_prompt.fish*' "$ignore_block" && echo yes || echo no) = no
+# __append_pipe_fzf.fish is chezmoi-managed (in source), so should not appear in the fisher block
+@test "chezmoi-managed __append_pipe_fzf.fish not in fisher block" \
+    (string match -q '*.config/fish/functions/__append_pipe_fzf.fish*' "$ignore_block" && echo yes || echo no) = no
 
 # ── chezmoi add respects ignore entries ───────────────────────────────────────
 
