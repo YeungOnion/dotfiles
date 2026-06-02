@@ -1,7 +1,4 @@
 #!/bin/bash
-
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 set -eufo pipefail
 
 {{- $brew_bin := "/usr/local/bin/brew" -}}
@@ -10,8 +7,16 @@ set -eufo pipefail
 {{-     $brew_bin = "/opt/homebrew/bin/brew" -}}
 {{-   end -}}
 {{- else if eq .chezmoi.os "linux" -}}
-{{-   $brew_bin = "/home/linuxbrew/.linuxbrew/bin/brew" -}}
-{{- end -}}
+{{-   $brew_bin = (joinPath .chezmoi.homeDir ".homebrew/bin/brew") -}}
+{{- end }}
+
+{{ if eq .chezmoi.os "darwin" }}
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+{{ else if eq .chezmoi.os "linux" }}
+mkdir -p {{ .chezmoi.homeDir }}/.homebrew
+curl -L https://github.com/Homebrew/brew/tarball/master \
+  | tar xz --strip-components 1 -C {{ .chezmoi.homeDir }}/.homebrew
+{{ end }}
 
 {{ $packages := list
   "xclip"
@@ -25,5 +30,5 @@ set -eufo pipefail
   "hurl" -}}
 
 {{ range $packages }}
-  {{$brew_bin}} install {{ . }}
+  {{ $brew_bin }} install {{ . }}
 {{ end }}

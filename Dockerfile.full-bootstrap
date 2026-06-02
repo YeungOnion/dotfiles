@@ -2,58 +2,48 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# brew requires build-essential, procps, curl, git
+# brew requires build-essential, procps, curl, git; gawk for fisher_chezmoi_sync
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    file \
+    gawk \
     git \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash testuser && \
-    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN useradd -m -s /bin/bash testuser
 
 USER testuser
 WORKDIR /home/testuser
 ENV HOME=/home/testuser
 
-# Install homebrew (linuxbrew)
-RUN NONINTERACTIVE=1 /bin/bash -c \
-    "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
-
-# Install fish and brew packages (mirrors run_install-brew.sh.tmpl)
-RUN brew install \
-    fish \
-    bat \
-    bat-extras-batman \
-    btop \
-    hurl \
-    jj \
-    pcre2 \
-    slides \
-    xclip
-
-# Install mise
-RUN curl https://mise.run | sh
-
-ENV PATH="/home/testuser/.local/bin:${PATH}"
-
-# Install chezmoi
+# chezmoi binary needed before execute-template can render scripts
 RUN sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /home/testuser/.local/bin
+ENV PATH="/home/testuser/.local/bin:${PATH}"
 
 COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
 
-# Deploy file structure (no scripts — fish not yet on PATH as login shell)
+# Install brew via the chezmoi script (tarball to ~/.homebrew, no sudo required)
+RUN chezmoi execute-template \
+      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_install-brew.sh.tmpl \
+      | bash
+
+ENV HOMEBREW_PREFIX="/home/testuser/.homebrew"
+ENV HOMEBREW_CELLAR="/home/testuser/.homebrew/Cellar"
+ENV HOMEBREW_REPOSITORY="/home/testuser/.homebrew"
+ENV PATH="/home/testuser/.homebrew/bin:/home/testuser/.homebrew/sbin:${PATH}"
+
+RUN brew update --force --quiet
+
+RUN curl https://mise.run | sh
+
+# Deploy file structure so conf.d/fisher_chezmoi_sync.fish is present for the fisher script
 RUN chezmoi apply --exclude scripts
 
-# Bootstrap fisher and install plugins using brew fish
-RUN /home/linuxbrew/.linuxbrew/bin/fish -c "\
-    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && \
-    fisher install jorgebucaran/fisher && \
-    fisher install < ~/.config/fish/fish_plugins && \
-    _fisher_sync_chezmoiignore \
-"
+# Bootstrap fisher via the chezmoi onchange script — same code path as a real install
+RUN chezmoi execute-template \
+      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
+      | /home/testuser/.homebrew/bin/fish
 
-CMD ["/home/linuxbrew/.linuxbrew/bin/fish"]
+CMD ["/home/testuser/.homebrew/bin/fish"]
