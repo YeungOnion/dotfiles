@@ -8,7 +8,18 @@ function _fisher_sync_chezmoiignore
         ~/.config/fish/conf.d \
         ~/.config/fish/completions
 
-    set -l fisher_files (chezmoi unmanaged $fish_dirs 2>/dev/null)
+    # chezmoi managed lists user-owned files; everything else in the dirs is fisher's
+    set -l managed (chezmoi managed $fish_dirs 2>/dev/null)
+    set -l fisher_files
+    for dir in $fish_dirs
+        test -d $dir || continue
+        for f in $dir/*.fish
+            test -f $f || continue
+            set -l rel (string replace -- "$HOME/" "" $f)
+            contains -- $rel $managed
+            or set -a fisher_files $rel
+        end
+    end
 
     set -l preserved
     if test -f $ignore
