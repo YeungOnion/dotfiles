@@ -1,0 +1,30 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install fish + chezmoi
+        run: |
+          sudo apt-get update && sudo apt-get install -y fish
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Apply dotfiles
+        run: chezmoi init --apply --source=$GITHUB_WORKSPACE
+
+      - name: Install fisher + plugins
+        run: |
+          chezmoi execute-template \
+            < home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
+            | fish
+
+      - name: Install fishtape
+        run: fish -c 'fisher install jorgebucaran/fishtape'
+
+      - name: Run tests
+        run: make test
