@@ -42,6 +42,12 @@ source ~/.config/fish/conf.d/chezmoi_nudge.fish 2>/dev/null
 @test "bare uv install (without tool) does not trigger" \
     (string match -q 'chezmoi?:*' (__chezmoi_nudge "uv install ruff" 2>&1) && echo yes || echo no) = no
 
+@test "apt install does not trigger" \
+    (string match -q 'chezmoi?:*' (__chezmoi_nudge "apt install bat" 2>&1) && echo yes || echo no) = no
+
+@test "pip install does not trigger" \
+    (string match -q 'chezmoi?:*' (__chezmoi_nudge "pip install requests" 2>&1) && echo yes || echo no) = no
+
 # ── Branch 2: editor on non-chezmoi path produces no apply reminder ───────────
 
 @echo "Branch 2: editor on non-chezmoiscripts path produces no output"

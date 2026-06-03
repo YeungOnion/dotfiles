@@ -39,26 +39,23 @@ Defines one function: `__chezmoi_nudge --on-event fish_postexec`.
 
 ### Branch 1 — Install nudge (lexical, instant)
 
-**Trigger:** command string contains `\b(install|binstall)\b` AND starts with a known manager prefix.
+**Trigger:** command string contains `\b(install|binstall)\b` AND has known manager prefix in command position.
 
-**Manager → script mapping:**
-
-| Command prefix | Script |
-|---|---|
-| `brew` | `run_onchange_install-brew.sh.tmpl` |
-| `cargo` | `run_onchange_install-cargo.sh.tmpl` |
-| `uv tool` | `run_onchange_install-uv.sh.tmpl` |
+commands
+- brew
+- cargo
+- uv tool
 
 **Output** (one line, to stderr so it doesn't pollute command output):
 ```
-chezmoi: add to all machines? hx (chezmoi source-path)/.chezmoiscripts/<script>
+chezmoi?: hx (chezmoi source-path)/.chezmoiscripts/
 ```
 
 No subprocess, no filesystem access. Pure string matching on `$argv[1]`.
 
 ### Branch 2 — Apply reminder (path check + status)
 
-**Trigger:** command string starts with a known editor (`hx`, `vim`, `nvim`, `nano`) AND contains the substring `.chezmoiscripts/` (matches both absolute paths and relative paths used after `chezmoi cd`).
+**Trigger:** commandline command is a known editor (`hx`, `vim`, `nvim`, `nano`) AND contains the substring `.chezmoiscripts/` (matches both absolute paths and relative paths used after `chezmoi source-path`).
 
 **Check:** `chezmoi status 2>/dev/null | string match -rq '^\s*R.*chezmoiscripts'`
 
