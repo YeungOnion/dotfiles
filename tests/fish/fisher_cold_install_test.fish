@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
-# Cold install integration tests — run against the integration image only
-# Requires: docker build -f Dockerfile.integration -t chezmoi-integration .
-# Run: fishtape tests/fish/fisher_cold_install_test.fish
+# Cold install integration tests — requires chezmoi apply + fisher install done
+# Run locally: make test
+# Run in CI: make test (GitHub Actions handles setup)
 
 set -g _chezmoi_src (chezmoi source-path 2>/dev/null)
 set -g _chezmoiignore $_chezmoi_src/.chezmoiignore
