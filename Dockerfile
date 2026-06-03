@@ -39,10 +39,10 @@ RUN sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /home/testuser/.local/bin
 ENV PATH="/home/testuser/.local/bin:${PATH}"
 # Copy only the brew script — isolates this slow layer from dotfile changes
 COPY --chown=testuser:testuser \
-     home/.chezmoiscripts/run_install-brew.sh.tmpl \
+     home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
 RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_install-brew.sh.tmpl \
+      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
       | bash
 ENV HOMEBREW_PREFIX="/home/testuser/.homebrew"
 ENV HOMEBREW_CELLAR="/home/testuser/.homebrew/Cellar"
