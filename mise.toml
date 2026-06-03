@@ -1,3 +1,12 @@
 [tools]
 node = "latest"
 npm = "latest"
+
+[tasks.test-unit]
+run = "make test-unit"
+
+[tasks.test]
+run = "make test"
+
+[tasks.test-smoke]
+run = "make test-smoke"
