@@ -29,7 +29,7 @@ CMD ["fish"]
 FROM ubuntu:24.04 AS brew-base
 ARG DEBIAN_FRONTEND
 RUN apt-get update && apt-get install -y \
-    build-essential curl file fish gawk git procps \
+    build-essential curl file gawk git procps \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -s /bin/bash testuser
 USER testuser
