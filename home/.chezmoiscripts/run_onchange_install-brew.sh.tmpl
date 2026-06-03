@@ -27,7 +27,20 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
   "bat"
   "bat-extras-batman"
   "btop"
-  "hurl" -}}
+  "hurl"
+  "fd"
+  "fzf"
+  "git"
+  "helix"
+  "ripgrep"
+  "trash-cli"
+  "tree"
+  "marksman"
+  "gh"
+  "git-delta"
+  "difftastic"
+  "git-branchless"
+  "git-cliff" -}}
 
 {{ range $packages }}
   {{ $brew_bin }} install {{ . }}
