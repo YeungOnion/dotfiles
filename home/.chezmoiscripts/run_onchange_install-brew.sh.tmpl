@@ -18,6 +18,10 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
   | tar xz --strip-components 1 -C {{ .chezmoi.homeDir }}/.homebrew
 {{ end }}
 
+# Third-party taps — tap and trust before installing
+{{ $brew_bin }} tap eth-p/software
+{{ $brew_bin }} trust --tap eth-p/software
+
 {{ $packages := list
   "xclip"
   "pcre2"
