@@ -1,8 +1,11 @@
-set -g __chezmoi_src (chezmoi source-path 2>/dev/null)
-
 function __chezmoi_nudge --on-event fish_postexec
     set -l prev_status $status
     set -l cmd $argv[1]
+
+    # Resolved lazily so chezmoi need not be in PATH at conf.d load time
+    if not set -q __chezmoi_src
+        command -q chezmoi && set -g __chezmoi_src (chezmoi source-path)
+    end
 
     # Branch 1: install nudge — lexical match only, no subprocesses
     if string match -rq '\b(install|binstall)\b' -- $cmd

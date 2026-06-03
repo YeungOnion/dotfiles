@@ -2,7 +2,10 @@
 # Tests for chezmoi package nudge hook
 # Run: fishtape tests/fish/chezmoi_nudge_test.fish
 
-source ~/.config/fish/conf.d/chezmoi_nudge.fish 2>/dev/null
+set -l _source_err (source ~/.config/fish/conf.d/chezmoi_nudge.fish 2>&1)
+
+@test "chezmoi_nudge.fish sources without stderr" \
+    (count $_source_err) = 0
 
 # ── Branch 1: install nudge triggers ─────────────────────────────────────────
 
