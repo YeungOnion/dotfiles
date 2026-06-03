@@ -9,6 +9,9 @@
   "spellcheck"
   "tauri" -}}
 
+{{ $binaries := list
+  "vector" -}}
+
 #!/usr/bin/bash
 set -eufo pipefail
 
@@ -19,4 +22,8 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 
 {{ range $plugins }}
   cargo binstall --locked cargo-{{ . }}
+{{ end }}
+
+{{ range $binaries }}
+  cargo binstall --locked {{ . }}
 {{ end }}

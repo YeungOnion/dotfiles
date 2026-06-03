@@ -18,11 +18,9 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
   | tar xz --strip-components 1 -C {{ .chezmoi.homeDir }}/.homebrew
 {{ end }}
 
-# Third-party taps — tap then trust specific formulae (not whole taps)
+# Third-party taps — trust specific formulae (not whole taps)
 {{ $brew_bin }} tap eth-p/software
-{{ $brew_bin }} trust --formula bat-extras-batman
-{{ $brew_bin }} tap vectordotdev/brew
-{{ $brew_bin }} trust --formula vector
+{{ $brew_bin }} trust --formula eth-p/software/bat-extras-batman
 
 {{ $packages := list
   "xclip"
@@ -39,15 +37,14 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
   "git"
   "helix"
   "ripgrep"
-  "trash-cli"
+  "trash"
   "tree"
   "marksman"
   "gh"
   "git-delta"
   "difftastic"
   "git-branchless"
-  "git-cliff"
-  "vector" -}}
+  "git-cliff" -}}
 
 {{ range $packages }}
   {{ $brew_bin }} install {{ . }}
