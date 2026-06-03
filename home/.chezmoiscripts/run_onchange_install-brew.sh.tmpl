@@ -22,11 +22,10 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
 {{ $brew_bin }} tap eth-p/software
 {{ $brew_bin }} trust --formula eth-p/software/bat-extras-batman
 
-{{ $packages := list
+{{- $packages := list
   "xclip"
   "pcre2"
   "jj"
-  "fish"
   "slides"
   "bat"
   "bat-extras-batman"
@@ -45,6 +44,9 @@ curl -L https://github.com/Homebrew/brew/tarball/master \
   "difftastic"
   "git-branchless"
   "git-cliff" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   $packages = append $packages "fish" -}}
+{{- end }}
 
 {{ range $packages }}
   {{ $brew_bin }} install {{ . }}
