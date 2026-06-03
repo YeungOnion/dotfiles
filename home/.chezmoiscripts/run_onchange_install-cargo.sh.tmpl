@@ -9,12 +9,6 @@
   "spellcheck"
   "tauri" -}}
 
-{{ $packages := list
-  "delta"
-  "difft"
-  "git-branchless"
-  "git-cliff" -}}
-
 #!/usr/bin/bash
 set -eufo pipefail
 
@@ -25,8 +19,4 @@ curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-
 
 {{ range $plugins }}
   cargo binstall --locked cargo-{{ . }}
-{{ end }}
-
-{{ range $packages }}
-  cargo binstall --locked {{ . }}
 {{ end }}
