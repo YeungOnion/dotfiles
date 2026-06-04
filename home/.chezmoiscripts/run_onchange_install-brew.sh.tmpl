@@ -10,42 +10,6 @@ set -ufo pipefail
 {{-   $brew_bin = (joinPath .chezmoi.homeDir ".homebrew/bin/brew") -}}
 {{- end }}
 
-{{ if eq .chezmoi.os "darwin" }}
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-{{ else if eq .chezmoi.os "linux" }}
-mkdir -p {{ .chezmoi.homeDir }}/.homebrew
-curl -L https://github.com/Homebrew/brew/tarball/master \
-  | tar xz --strip-components 1 -C {{ .chezmoi.homeDir }}/.homebrew
-{{ end }}
-
-# Third-party taps — trust specific formulae (not whole taps)
-{{ $brew_bin }} tap eth-p/software
-{{ $brew_bin }} trust --formula eth-p/software/bat-extras-batman
-
-{{- $packages := list
-  "xclip"
-  "pcre2"
-  "jj"
-  "fish"
-  "slides"
-  "bat"
-  "bat-extras-batman"
-  "btop"
-  "hurl"
-  "fd"
-  "fzf"
-  "git"
-  "helix"
-  "ripgrep"
-  "trash"
-  "tree"
-  "marksman"
-  "gh"
-  "git-delta"
-  "difftastic"
-  "git-branchless"
-  "git-cliff" -}}
-
-{{ range $packages }}
-  {{ $brew_bin }} install {{ . }}
+{{ range .brew_packages }}
+{{ $brew_bin }} install {{ . }}
 {{ end }}

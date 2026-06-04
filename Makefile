@@ -19,7 +19,7 @@ test:
 	fish -c 'fishtape $(ALL_TESTS)'
 
 test-smoke:
-	DOCKER_BUILDKIT=1 docker build --target brew-base -t chezmoi-brew-base .
+	DOCKER_BUILDKIT=1 docker build --target package-managers-base -t chezmoi-package-managers-base .
 	DOCKER_BUILDKIT=1 docker build -f Dockerfile.smoke -t $(SMOKE_IMAGE) .
 	docker run --rm $(SMOKE_IMAGE) fish -c \
 	    "jj --version && functions -q fisher && cargo nextest --version && uv tool list | grep -q py-spy"

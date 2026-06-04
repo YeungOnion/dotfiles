@@ -1,38 +1,37 @@
 ARG DEBIAN_FRONTEND=noninteractive
 
-FROM chezmoi-brew-base AS smoke
+FROM chezmoi-package-managers-base AS smoke
 
-# Brew packages (includes fish) — slow layer, cached until script changes
+# Config — test package set (minimal, matches smoke assertions)
+COPY --chown=testuser:testuser chezmoi.test.toml /home/testuser/.config/chezmoi/chezmoi.toml
+
+# Brew packages — cached until brew script or config changes
 COPY --chown=testuser:testuser \
      home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
-      | bash
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl
 
-# Cargo plugins only — slow layer, cached until script changes
+# Cargo plugins — cached until cargo script or config changes
 COPY --chown=testuser:testuser \
      home/.chezmoiscripts/run_onchange_install-cargo.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-cargo.sh.tmpl \
-      | bash
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-cargo.sh.tmpl
 
-# UV tools — moderate speed, cached until script changes
+# UV tools — cached until uv script or config changes
 COPY --chown=testuser:testuser \
      home/.chezmoiscripts/run_onchange_install-uv.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-uv.sh.tmpl \
-      | bash
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-uv.sh.tmpl
 
 # Full dotfiles — invalidates fisher layer below on any dotfile change
 COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
 RUN chezmoi apply --exclude scripts
 
 # Fisher install — must follow chezmoi apply (needs fisher_chezmoi_sync.fish deployed)
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
-      | /home/testuser/.homebrew/bin/fish
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl
 
 CMD ["/home/testuser/.homebrew/bin/fish"]

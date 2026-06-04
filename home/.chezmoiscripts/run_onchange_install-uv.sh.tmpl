@@ -1,22 +1,6 @@
-{{- $uv_packages := list
-  "py-spy"
-  "hatch"
-  "histoprint"
-  "jrnl"
-  "rename"
-  "ruff-lsp" -}}
-
 #!/usr/bin/bash
 set -eufo pipefail
 
-{{ if not (lookPath "uv") }}
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-{{ end }}
-
-{{ if not (lookPath "pixi") }}
-  curl -fsSL https://pixi.sh/install.sh | sh
-{{ end }}
-
-{{ range $uv_packages }}
-  uv tool install {{ . }}
+{{ range .uv_packages }}
+uv tool install {{ . }}
 {{ end }}

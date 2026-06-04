@@ -1,29 +1,10 @@
-{{ $plugins := list
-  "binstall"
-  "expand"
-  "hack"
-  "llvm-cov"
-  "nextest"
-  "release"
-  "shuttle"
-  "spellcheck"
-  "tauri" -}}
-
-{{ $binaries := list
-  "vector" -}}
-
 #!/usr/bin/bash
 set -eufo pipefail
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-toolchain stable -- component cargo --component clippy
-
-# install cargo-binstall
-curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
-
-{{ range $plugins }}
-  cargo binstall --locked cargo-{{ . }}
+{{ range .cargo_plugins }}
+cargo binstall --locked cargo-{{ . }}
 {{ end }}
 
-{{ range $binaries }}
-  cargo binstall --locked {{ . }}
+{{ range .cargo_binaries }}
+cargo binstall --locked {{ . }}
 {{ end }}

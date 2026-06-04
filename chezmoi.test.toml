@@ -1,0 +1,13 @@
+[data]
+  brew_packages = [
+    "fish",
+    "git",
+    "jj",
+  ]
+  cargo_plugins = [
+    "nextest",
+  ]
+  cargo_binaries = []
+  uv_packages = [
+    "py-spy",
+  ]

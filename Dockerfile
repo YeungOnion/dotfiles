@@ -18,15 +18,14 @@ RUN chezmoi apply --exclude scripts
 CMD ["fish"]
 
 FROM fast-base AS integration
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
-      | fish
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl
 CMD ["fish"]
 
 # ── full bootstrap (brew fish, cold install) ──────────────────────────────────
-# Targets: brew-base (chezmoi-brew-base), bootstrap (chezmoi-bootstrap)
+# Targets: package-managers-base (chezmoi-package-managers-base), bootstrap (chezmoi-bootstrap)
 
-FROM ubuntu:24.04 AS brew-base
+FROM ubuntu:24.04 AS package-managers-base
 ARG DEBIAN_FRONTEND
 RUN apt-get update && apt-get install -y \
     build-essential curl file gawk git procps \
@@ -37,24 +36,41 @@ WORKDIR /home/testuser
 ENV HOME=/home/testuser
 RUN sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /home/testuser/.local/bin
 ENV PATH="/home/testuser/.local/bin:${PATH}"
-# Copy only the brew script — isolates this slow layer from dotfile changes
+# Copy source root marker + bootstrap script — isolates this slow layer from dotfile changes
 COPY --chown=testuser:testuser \
-     home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
+     .chezmoiroot \
+     /home/testuser/.local/share/chezmoi/.chezmoiroot
+COPY --chown=testuser:testuser \
+     home/.chezmoiscripts/run_onchange_bootstrap-package-managers.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
-      | bash
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_bootstrap-package-managers.sh.tmpl
 ENV HOMEBREW_PREFIX="/home/testuser/.homebrew"
 ENV HOMEBREW_CELLAR="/home/testuser/.homebrew/Cellar"
 ENV HOMEBREW_REPOSITORY="/home/testuser/.homebrew"
-ENV PATH="/home/testuser/.homebrew/bin:/home/testuser/.homebrew/sbin:${PATH}"
+ENV PATH="/home/testuser/.homebrew/bin:/home/testuser/.homebrew/sbin:/home/testuser/.cargo/bin:${PATH}"
 RUN brew update --force --quiet
 RUN curl https://mise.run | sh
 
-FROM brew-base AS bootstrap
+FROM package-managers-base AS bootstrap
+COPY --chown=testuser:testuser chezmoi.toml /home/testuser/.config/chezmoi/chezmoi.toml
+COPY --chown=testuser:testuser \
+     home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
+     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl
+COPY --chown=testuser:testuser \
+     home/.chezmoiscripts/run_onchange_install-cargo.sh.tmpl \
+     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-cargo.sh.tmpl
+COPY --chown=testuser:testuser \
+     home/.chezmoiscripts/run_onchange_install-uv.sh.tmpl \
+     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-uv.sh.tmpl
 COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
 RUN chezmoi apply --exclude scripts
-RUN chezmoi execute-template \
-      < /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
-      | /home/testuser/.homebrew/bin/fish
+RUN chezmoi apply --include=scripts --source-path \
+      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl
 CMD ["/home/testuser/.homebrew/bin/fish"]
