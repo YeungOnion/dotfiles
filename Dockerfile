@@ -54,6 +54,15 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/t
 RUN brew update --force --quiet
 RUN curl https://mise.run | sh
 
+FROM package-managers-base AS smoke
+# Config — test package set (minimal, matches smoke assertions)
+COPY --chown=testuser:testuser chezmoi.test.toml /home/testuser/.config/chezmoi/chezmoi.toml
+COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
+WORKDIR /home/testuser/.local/share/chezmoi
+RUN make apply-dotfiles
+RUN make apply-packages
+CMD ["/home/linuxbrew/.linuxbrew/bin/fish"]
+
 FROM package-managers-base AS bootstrap
 COPY --chown=testuser:testuser home/.chezmoi.toml.tmpl /home/testuser/.config/chezmoi/chezmoi.toml
 COPY --chown=testuser:testuser \
