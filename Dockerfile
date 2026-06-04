@@ -55,7 +55,7 @@ RUN brew update --force --quiet
 RUN curl https://mise.run | sh
 
 FROM package-managers-base AS bootstrap
-COPY --chown=testuser:testuser chezmoi.toml /home/testuser/.config/chezmoi/chezmoi.toml
+COPY --chown=testuser:testuser .chezmoi.toml.tmpl /home/testuser/.config/chezmoi/chezmoi.toml
 COPY --chown=testuser:testuser \
      home/.chezmoiscripts/run_onchange_install-brew.sh.tmpl \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
