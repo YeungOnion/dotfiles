@@ -9,7 +9,7 @@ function _fisher_sync_chezmoiignore
         ~/.config/fish/completions
 
     # chezmoi managed lists user-owned files; everything else in the dirs is fisher's
-    set -l managed (chezmoi managed $fish_dirs 2>/dev/null)
+    set -l managed (chezmoi managed $fish_dirs 2>/dev/null; or true)
     set -l fisher_files
     for dir in $fish_dirs
         test -d $dir || continue
@@ -32,6 +32,7 @@ function _fisher_sync_chezmoiignore
         printf '%s\n' $fisher_files
         printf '# fisher:end\n'
     end > $ignore
+    return 0
 end
 
 function _fisher_postexec_sync --on-event fish_postexec
