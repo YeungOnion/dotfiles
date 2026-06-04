@@ -36,7 +36,8 @@ set -l _stderr (fish -c exit 2>&1)
 set -l fake_fn ~/.config/fish/functions/_test_fisher_plugin.fish
 echo "# fake fisher plugin for testing" > $fake_fn
 
-_fisher_sync_chezmoiignore
+@test "_fisher_sync_chezmoiignore returns 0" \
+    (_fisher_sync_chezmoiignore; echo $status) = 0
 
 set -l ignore_content (cat $_chezmoiignore 2>/dev/null)
 

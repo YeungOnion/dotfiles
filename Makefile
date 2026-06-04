@@ -2,6 +2,7 @@
 
 FISHTAPE    := fish -c 'fishtape'
 SMOKE_IMAGE := chezmoi-smoke
+SMOKE_SRC   := /home/testuser/.local/share/chezmoi
 
 UNIT_TESTS := \
 	tests/fish/chezmoi_nudge_test.fish \
@@ -12,6 +13,8 @@ ALL_TESTS := \
 	tests/fish/fisher_chezmoi_test.fish \
 	tests/fish/fisher_cold_install_test.fish
 
+SMOKE_TESTS := $(addprefix $(SMOKE_SRC)/,$(ALL_TESTS))
+
 test-unit:
 	fish -c 'fishtape $(UNIT_TESTS)'
 
@@ -21,5 +24,6 @@ test:
 test-smoke:
 	DOCKER_BUILDKIT=1 docker build --target package-managers-base -t chezmoi-package-managers-base .
 	DOCKER_BUILDKIT=1 docker build -f Dockerfile.smoke -t $(SMOKE_IMAGE) .
+	docker run --rm $(SMOKE_IMAGE) fish -c 'fishtape $(SMOKE_TESTS)'
 	docker run --rm $(SMOKE_IMAGE) fish -c \
 	    "jj --version && functions -q fisher && cargo nextest --version && uv tool list | grep -q py-spy"
