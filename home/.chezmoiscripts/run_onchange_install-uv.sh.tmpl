@@ -1,9 +1,9 @@
 #!/usr/bin/bash
-set -eufo pipefail
+set -ufo pipefail
 
 export PATH="$HOME/.local/bin:$PATH"
 
 {{ range .uv_packages -}}
 uv tool install {{ . }} &
 {{ end -}}
-wait
+wait || echo "⚠  some uv tool installs failed — check output above"

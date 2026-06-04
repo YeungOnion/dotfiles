@@ -7,4 +7,5 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 {{ end -}}
 
-brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }}
+brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }} \
+  || echo "⚠  brew install exited non-zero — check output above for failed packages"

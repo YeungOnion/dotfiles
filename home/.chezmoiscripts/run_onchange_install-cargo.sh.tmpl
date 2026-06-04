@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-set -eufo pipefail
+set -ufo pipefail
 
 . "$HOME/.cargo/env"
 
 {{ if or .cargo_plugins .cargo_binaries -}}
-cargo binstall --locked --no-confirm --disable-strategies compile{{ range .cargo_plugins }} cargo-{{ . }}{{ end }}{{ range .cargo_binaries }} {{ . }}{{ end }}
+cargo binstall --locked --no-confirm --disable-strategies compile{{ range .cargo_plugins }} cargo-{{ . }}{{ end }}{{ range .cargo_binaries }} {{ . }}{{ end }} \
+  || echo "⚠  cargo binstall exited non-zero — check output above for failed crates"
 {{ end -}}
