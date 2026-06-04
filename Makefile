@@ -18,10 +18,10 @@ ALL_TESTS := \
 SMOKE_TESTS := $(addprefix $(SMOKE_SRC)/,$(ALL_TESTS))
 
 apply-dotfiles:
-	chezmoi apply --exclude=scripts
+	chezmoi apply --source=$(CHEZMOI_SOURCE) --exclude=scripts
 
 apply-packages:
-	chezmoi apply --include=scripts --source-path $(SCRIPTS_DIR)/run_onchange_install-packages.sh.tmpl
+	chezmoi apply --source=$(CHEZMOI_SOURCE) --include=scripts --source-path $(SCRIPTS_DIR)/run_onchange_install-packages.sh.tmpl
 
 test-unit:
 	fish -c 'fishtape $(UNIT_TESTS)'
