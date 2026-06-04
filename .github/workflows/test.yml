@@ -18,10 +18,10 @@ jobs:
         run: chezmoi init --source=$GITHUB_WORKSPACE
 
       - name: Apply dotfiles
-        run: chezmoi apply --exclude=scripts
+        run: make apply-dotfiles
 
       - name: Install fisher + plugins
-        run: chezmoi apply --include=scripts --source-path $GITHUB_WORKSPACE/home/.chezmoiscripts/run_onchange_install-packages.sh.tmpl
+        run: make apply-packages
 
       - name: Run tests
         run: make test

@@ -7,10 +7,9 @@ COPY --chown=testuser:testuser chezmoi.test.toml /home/testuser/.config/chezmoi/
 
 # Full dotfiles — needed before install-packages (fisher sync reads conf.d)
 COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
-RUN chezmoi apply --exclude scripts
 
-# Packages — brew + cargo + uv concurrently, then fisher
-RUN chezmoi apply --include=scripts --source-path \
-      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-packages.sh.tmpl
+WORKDIR /home/testuser/.local/share/chezmoi
+RUN make apply-dotfiles
+RUN make apply-packages
 
 CMD ["/home/linuxbrew/.linuxbrew/bin/fish"]

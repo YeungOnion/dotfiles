@@ -1,8 +1,10 @@
-.PHONY: test-unit test test-smoke
+.PHONY: apply-dotfiles apply-packages test-unit test test-smoke
 
-FISHTAPE    := fish -c 'fishtape'
-SMOKE_IMAGE := chezmoi-smoke
-SMOKE_SRC   := /home/testuser/.local/share/chezmoi
+FISHTAPE       := fish -c 'fishtape'
+SMOKE_IMAGE    := chezmoi-smoke
+SMOKE_SRC      := /home/testuser/.local/share/chezmoi
+CHEZMOI_SOURCE ?= $(shell chezmoi source-path)
+SCRIPTS_DIR    := $(CHEZMOI_SOURCE)/.chezmoiscripts
 
 UNIT_TESTS := \
 	tests/fish/chezmoi_nudge_test.fish \
@@ -14,6 +16,12 @@ ALL_TESTS := \
 	tests/fish/fisher_cold_install_test.fish
 
 SMOKE_TESTS := $(addprefix $(SMOKE_SRC)/,$(ALL_TESTS))
+
+apply-dotfiles:
+	chezmoi apply --exclude=scripts
+
+apply-packages:
+	chezmoi apply --include=scripts --source-path $(SCRIPTS_DIR)/run_onchange_install-packages.sh.tmpl
 
 test-unit:
 	fish -c 'fishtape $(UNIT_TESTS)'
