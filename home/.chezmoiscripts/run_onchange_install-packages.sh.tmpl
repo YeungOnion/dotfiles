@@ -1,0 +1,58 @@
+#!/bin/bash
+set -ufo pipefail
+# fish plugins: {{ include (joinPath .chezmoi.homeDir ".config/fish/fish_plugins") | sha256sum }}
+
+# -- PATH setup ---------------------------------------------------------------
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$(/opt/homebrew/bin/brew shellenv)"
+fish_bin=/opt/homebrew/bin/fish
+{{ else -}}
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fish_bin=/home/linuxbrew/.linuxbrew/bin/fish
+{{ end -}}
+. "$HOME/.cargo/env"
+export PATH="$HOME/.local/bin:$PATH"
+
+# -- Installers ---------------------------------------------------------------
+install_brew() {
+    brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }}
+}
+
+install_cargo() {
+{{ if or .cargo_plugins .cargo_binaries -}}
+    cargo binstall --locked --no-confirm --disable-strategies compile{{ range .cargo_plugins }} cargo-{{ . }}{{ end }}{{ range .cargo_binaries }} {{ . }}{{ end }}
+{{ end -}}
+}
+
+install_uv() {
+{{ range .uv_packages -}}
+    uv tool install {{ . }} &
+{{ end -}}
+    wait
+}
+
+install_fish_plugins() {
+    if ! $fish_bin -c 'functions -q fisher'; then
+        curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish \
+            | $fish_bin
+        $fish_bin -c 'fisher install jorgebucaran/fisher'
+    fi
+    $fish_bin -c 'fisher install < ~/.config/fish/fish_plugins'
+    $fish_bin -c '_fisher_sync_chezmoiignore; or true'
+}
+
+# -- Concurrent installs, then fish -------------------------------------------
+install_brew  & brew_pid=$!
+install_cargo & cargo_pid=$!
+install_uv    & uv_pid=$!
+
+brew_ok=0;  wait $brew_pid  || brew_ok=$?
+cargo_ok=0; wait $cargo_pid || cargo_ok=$?
+uv_ok=0;    wait $uv_pid    || uv_ok=$?
+
+[[ $brew_ok  -eq 0 ]] || echo "⚠  brew install exited $brew_ok — check output above"
+[[ $cargo_ok -eq 0 ]] || echo "⚠  cargo binstall exited $cargo_ok — check output above"
+[[ $uv_ok    -eq 0 ]] || echo "⚠  uv tool install exited $uv_ok — check output above"
+
+# Fish plugins run after brew (needs brew's fish binary)
+install_fish_plugins || echo "⚠  fisher install exited non-zero — check output above"
