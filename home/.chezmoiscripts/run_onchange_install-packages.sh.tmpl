@@ -32,13 +32,14 @@ install_uv() {
 }
 
 install_fish_plugins() {
-    if ! $fish_bin -c 'functions -q fisher'; then
-        curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish \
-            | $fish_bin
-        $fish_bin -c 'fisher install jorgebucaran/fisher'
-    fi
-    $fish_bin -c 'fisher install < ~/.config/fish/fish_plugins'
-    $fish_bin -c '_fisher_sync_chezmoiignore; or true'
+    $fish_bin << 'FISH'
+if not functions -q fisher
+    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+    fisher install jorgebucaran/fisher
+end
+fisher install < ~/.config/fish/fish_plugins
+_fisher_sync_chezmoiignore; or true
+FISH
 }
 
 # -- Concurrent installs, then fish -------------------------------------------
