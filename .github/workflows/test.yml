@@ -17,7 +17,9 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Init chezmoi (generates config from .chezmoi.toml.tmpl)
-        run: chezmoi init --source=$GITHUB_WORKSPACE
+        run: |
+          chezmoi init --source=$GITHUB_WORKSPACE
+          printf '\n[chezmoi]\n  sourceDir = "%s/home"\n' "$GITHUB_WORKSPACE" >> ~/.config/chezmoi/chezmoi.toml
 
       - name: Apply dotfiles
         run: make apply-dotfiles
