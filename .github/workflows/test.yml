@@ -14,17 +14,14 @@ jobs:
           sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Init chezmoi (generates config from .chezmoi.toml.tmpl)
+        run: chezmoi init --source=$GITHUB_WORKSPACE
+
       - name: Apply dotfiles
-        run: chezmoi init --apply --source=$GITHUB_WORKSPACE
+        run: chezmoi apply --exclude=scripts
 
       - name: Install fisher + plugins
-        run: |
-          chezmoi execute-template \
-            < home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl \
-            | fish
-
-      - name: Install fishtape
-        run: fish -c 'fisher install jorgebucaran/fishtape'
+        run: chezmoi apply --include=scripts --source-path $GITHUB_WORKSPACE/home/.chezmoiscripts/run_onchange_install-packages.sh.tmpl
 
       - name: Run tests
         run: make test

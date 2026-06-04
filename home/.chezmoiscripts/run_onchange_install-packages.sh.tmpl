@@ -5,10 +5,10 @@ set -ufo pipefail
 # -- PATH setup ---------------------------------------------------------------
 {{ if eq .chezmoi.os "darwin" -}}
 eval "$(/opt/homebrew/bin/brew shellenv)"
-fish_bin=/opt/homebrew/bin/fish
+fish_bin={{ or (lookPath "fish") "/opt/homebrew/bin/fish" }}
 {{ else -}}
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fish_bin=/home/linuxbrew/.linuxbrew/bin/fish
+fish_bin={{ or (lookPath "fish") "/home/linuxbrew/.linuxbrew/bin/fish" }}
 {{ end -}}
 . "$HOME/.cargo/env"
 export PATH="$HOME/.local/bin:$PATH"
