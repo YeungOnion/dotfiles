@@ -19,6 +19,7 @@ jobs:
       - name: Init chezmoi (generates config from .chezmoi.toml.tmpl)
         run: |
           chezmoi init --source=$GITHUB_WORKSPACE
+          mkdir -p ~/.local/share
           ln -s $GITHUB_WORKSPACE/home ~/.local/share/chezmoi
 
       - name: Apply dotfiles
