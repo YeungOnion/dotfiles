@@ -1,15 +1,6 @@
 #!/bin/bash
 set -ufo pipefail
 
-{{- $brew_bin := "/usr/local/bin/brew" -}}
-{{- if eq .chezmoi.os "darwin" -}}
-{{-   if eq .chezmoi.arch "arm64" -}}
-{{-     $brew_bin = "/opt/homebrew/bin/brew" -}}
-{{-   end -}}
-{{- else if eq .chezmoi.os "linux" -}}
-{{-   $brew_bin = (joinPath .chezmoi.homeDir ".homebrew/bin/brew") -}}
-{{- end }}
-
 {{ range .brew_packages }}
-{{ $brew_bin }} install {{ . }}
+brew install {{ . }}
 {{ end }}

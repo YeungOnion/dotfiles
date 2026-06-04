@@ -34,4 +34,4 @@ RUN chezmoi apply --exclude scripts
 RUN chezmoi apply --include=scripts --source-path \
       /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl
 
-CMD ["/home/testuser/.homebrew/bin/fish"]
+CMD ["/home/linuxbrew/.linuxbrew/bin/fish"]

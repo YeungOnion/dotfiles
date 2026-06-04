@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y \
     build-essential curl file gawk git procps \
     && rm -rf /var/lib/apt/lists/*
 RUN useradd -m -s /bin/bash testuser
+# Standard linuxbrew prefix — bottles are built for this path, avoids source compilation
+RUN mkdir -p /home/linuxbrew && chown testuser:testuser /home/linuxbrew
 USER testuser
 WORKDIR /home/testuser
 ENV HOME=/home/testuser
@@ -45,10 +47,10 @@ COPY --chown=testuser:testuser \
      /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
 RUN chezmoi apply --include=scripts --source-path \
       /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_bootstrap-package-managers.sh.tmpl
-ENV HOMEBREW_PREFIX="/home/testuser/.homebrew"
-ENV HOMEBREW_CELLAR="/home/testuser/.homebrew/Cellar"
-ENV HOMEBREW_REPOSITORY="/home/testuser/.homebrew"
-ENV PATH="/home/testuser/.homebrew/bin:/home/testuser/.homebrew/sbin:/home/testuser/.cargo/bin:${PATH}"
+ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+ENV HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
+ENV HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew"
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/testuser/.cargo/bin:${PATH}"
 RUN brew update --force --quiet
 RUN curl https://mise.run | sh
 
@@ -73,4 +75,4 @@ COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
 RUN chezmoi apply --exclude scripts
 RUN chezmoi apply --include=scripts --source-path \
       /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/run_onchange_install-fish.fish.tmpl
-CMD ["/home/testuser/.homebrew/bin/fish"]
+CMD ["/home/linuxbrew/.linuxbrew/bin/fish"]

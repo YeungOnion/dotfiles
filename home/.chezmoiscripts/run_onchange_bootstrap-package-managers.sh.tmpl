@@ -1,27 +1,20 @@
 #!/bin/bash
 set -eufo pipefail
 
-{{- $brew_bin := "/usr/local/bin/brew" -}}
-{{- if eq .chezmoi.os "darwin" -}}
-{{-   if eq .chezmoi.arch "arm64" -}}
-{{-     $brew_bin = "/opt/homebrew/bin/brew" -}}
-{{-   end -}}
-{{- else if eq .chezmoi.os "linux" -}}
-{{-   $brew_bin = (joinPath .chezmoi.homeDir ".homebrew/bin/brew") -}}
-{{- end }}
+# Linux prerequisite (one-time, run as root before chezmoi apply):
+#   mkdir -p /home/linuxbrew && chown $(whoami) /home/linuxbrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 {{ if eq .chezmoi.os "darwin" }}
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
 {{ else if eq .chezmoi.os "linux" }}
-mkdir -p {{ .chezmoi.homeDir }}/.homebrew
-curl -L https://github.com/Homebrew/brew/tarball/master \
-  | tar xz --strip-components 1 -C {{ .chezmoi.homeDir }}/.homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 {{ end }}
 
-{{ $brew_bin }} tap eth-p/software
-{{ $brew_bin }} trust --formula eth-p/software/bat-extras-batman
+brew tap eth-p/software
+brew trust --formula eth-p/software/bat-extras-batman
 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -- -y --default-toolchain stable -- component cargo --component clippy
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --component cargo --component clippy
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
 {{ if not (lookPath "uv") }}
