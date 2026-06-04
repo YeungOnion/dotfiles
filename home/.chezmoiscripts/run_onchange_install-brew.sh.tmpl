@@ -1,4 +1,10 @@
 #!/bin/bash
 set -ufo pipefail
 
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$(/opt/homebrew/bin/brew shellenv)"
+{{ else -}}
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+{{ end -}}
+
 brew install {{ .brew_packages | join " " }}

@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 set -eufo pipefail
 
+export PATH="$HOME/.local/bin:$PATH"
+
 {{ range .uv_packages -}}
 uv tool install {{ . }} &
 {{ end -}}
