@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -eufo pipefail
 
-{{ range .cargo_plugins }}
-cargo binstall --locked --no-confirm --disable-strategies compile cargo-{{ . }}
-{{ end }}
-
-{{ range .cargo_binaries }}
-cargo binstall --locked --no-confirm --disable-strategies compile {{ . }}
-{{ end }}
+{{ if or .cargo_plugins .cargo_binaries -}}
+cargo binstall --locked --no-confirm --disable-strategies compile{{ range .cargo_plugins }} cargo-{{ . }}{{ end }}{{ range .cargo_binaries }} {{ . }}{{ end }}
+{{ end -}}

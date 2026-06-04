@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 set -eufo pipefail
 
-{{ range .uv_packages }}
-uv tool install {{ . }}
-{{ end }}
+{{ range .uv_packages -}}
+uv tool install {{ . }} &
+{{ end -}}
+wait

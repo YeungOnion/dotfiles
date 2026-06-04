@@ -1,6 +1,4 @@
 #!/bin/bash
 set -ufo pipefail
 
-{{ range .brew_packages }}
-brew install {{ . }}
-{{ end }}
+brew install {{ .brew_packages | join " " }}
