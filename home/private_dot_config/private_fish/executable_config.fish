@@ -22,6 +22,8 @@ if status is-interactive
         ln --symbolic --force (command -s bat batcat)[-1] ~/.local/bin/bat
         set -gx PAGER bat -p
         set -g MANPAGER batman
+        set -Ux BAT_THEME_LIGHT OneHalfLight
+        set -Ux BAT_THEME_DARK Dracula
     else
         echo "cannot find `bat' pager, choosing `cat' instead" >&2
         set -gx PAGER cat

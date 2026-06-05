@@ -1,4 +1,4 @@
-theme = "snazzy"
+theme = "dracula"
 
 [editor]
 # true-color = true
@@ -37,6 +37,10 @@ skip-levels = 1
 "ret" = ":run-shell-command make"
 c = ":run-shell-command cargo build"
 t = ":run-shell-command cargo test"
+
+[keys.normal.space.t]
+l = ":theme zed_onelight"
+d = ":theme dracula"
 
 [keys.insert]
 j = { k = "normal_mode" }
