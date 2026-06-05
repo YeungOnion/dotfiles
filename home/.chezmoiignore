@@ -53,20 +53,9 @@
 .config/fish/conf.d/puffer_fish_key_bindings.fish
 .config/fish/conf.d/sponge.fish
 .config/fish/conf.d/z.fish
-.config/fish/completions/chezmoi.fish
 .config/fish/completions/fisher.fish
 .config/fish/completions/fishtape.fish
 .config/fish/completions/fzf_configure_bindings.fish
-.config/fish/completions/glow.fish
-.config/fish/completions/jj.fish
-.config/fish/completions/lefthook.fish
-.config/fish/completions/mise.fish
 .config/fish/completions/nvm.fish
 .config/fish/completions/replay.fish
-.config/fish/completions/rezoomie.fish
-.config/fish/completions/roborev.fish
-.config/fish/completions/shuttle.fish
-.config/fish/completions/tree-sitter.fish
-.config/fish/completions/uv.fish
-.config/fish/completions/wezterm.fish
 # fisher:end
