@@ -1,0 +1,54 @@
+[data]
+  brew_packages = [
+    "bat",
+    "bat-extras",
+    "btop",
+    "difftastic",
+    "fd",
+    "fish",
+    "fzf",
+    "gh",
+    "git",
+    "git-branchless",
+    "git-cliff",
+    "git-delta",
+    "helix",
+    "hurl",
+    "jj",
+    "marksman",
+    "pcre2",
+    "ripgrep",
+    "slides",
+    "swi-prolog",
+    "tmuxinator",
+    "tree",
+    "youplot",
+  ]
+  brew_packages_linux = [
+    "xclip",
+  ]
+  brew_packages_darwin = [
+  ]
+  cargo_plugins = [
+    "binstall",
+    "expand",
+    "hack",
+    "llvm-cov",
+    "nextest",
+    "release",
+    "shuttle",
+    "spellcheck",
+  ]
+  cargo_binaries = [
+    "tauri-cli",
+    "vector",
+    "trash-cli-rs",
+  ]
+  uv_packages = [
+    "py-spy",
+    "hatch",
+    "histoprint",
+    "jrnl",
+    "rename",
+    "ruff-lsp",
+  ]
