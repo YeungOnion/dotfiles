@@ -11,8 +11,10 @@ set -eufo pipefail
 
 # universal config: {{ $vars | toJson }}
 
-fish -c '
+if command -v fish &>/dev/null; then
+    fish -c '
 {{- range $k, $v := $vars }}
 set -Ux {{ $k }} {{ $v }}
 {{- end }}
 '
+fi

@@ -1,0 +1,33 @@
+#!/bin/bash
+set -eufo pipefail
+
+# Linux prerequisite (one-time, run as root before chezmoi apply):
+#   mkdir -p /home/linuxbrew && chown $(whoami) /home/linuxbrew
+{{ if eq .chezmoi.os "darwin" -}}
+if ! [ -x /opt/homebrew/bin/brew ]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
+{{ else if eq .chezmoi.os "linux" -}}
+if ! [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+{{ end -}}
+
+if ! command -v rustup &>/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --component cargo --component clippy
+fi
+. "$HOME/.cargo/env"
+
+if ! command -v cargo-binstall &>/dev/null; then
+    curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+fi
+
+if ! command -v uv &>/dev/null; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+if ! command -v pixi &>/dev/null; then
+    curl -fsSL https://pixi.sh/install.sh | sh
+fi
