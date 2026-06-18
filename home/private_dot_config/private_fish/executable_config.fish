@@ -4,9 +4,7 @@
 set -gx --path RUSTUP_HOME $HOME/.rustup
 set -gx --path CARGO_HOME $HOME/.cargo
 set -gx --path GOPATH $HOME/.go
-if command -q go
-    set -gx GOBIN (go env GOPATH)/bin
-end
+set -gx GOBIN $GOPATH/bin
 set -gx CC cc
 
 if status is-interactive
