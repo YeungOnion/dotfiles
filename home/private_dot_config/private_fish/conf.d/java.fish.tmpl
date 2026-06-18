@@ -1,0 +1,6 @@
+{{ if .java_home -}}
+set -gx JAVA_HOME {{ .java_home }}
+{{- else }}
+command -q java && set -gx JAVA_HOME (dirname (dirname (readlink -f (command -v java))))
+{{- end }}
+test -n "$JAVA_HOME" && fish_add_path $JAVA_HOME/bin
