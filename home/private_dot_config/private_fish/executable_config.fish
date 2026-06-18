@@ -15,15 +15,12 @@ if status is-interactive
     set -g FZF_DEFAULT_OPTS --ansi
 
     # pager related
-    if command -s bat batcat
-        # create soft link if not exist, overwrite otherwise
-        ln --symbolic --force (command -s bat batcat)[-1] ~/.local/bin/bat
+    if command -q bat
         set -gx PAGER bat -p
         set -g MANPAGER batman
         set -Ux BAT_THEME_LIGHT OneHalfLight
         set -Ux BAT_THEME_DARK Dracula
     else
-        echo "cannot find `bat' pager, choosing `cat' instead" >&2
         set -gx PAGER cat
     end
 

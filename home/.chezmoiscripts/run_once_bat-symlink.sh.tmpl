@@ -1,0 +1,12 @@
+#!/bin/bash
+set -eufo pipefail
+
+{{ if eq .chezmoi.os "linux" -}}
+# On Linux, bat may be installed as batcat (Debian/Ubuntu naming conflict).
+# Create a canonical symlink so all config can reference `bat` uniformly.
+bat_bin=$(command -v bat 2>/dev/null || command -v batcat 2>/dev/null || true)
+if [ -n "$bat_bin" ]; then
+    mkdir -p "$HOME/.local/bin"
+    ln --symbolic --force "$bat_bin" "$HOME/.local/bin/bat"
+fi
+{{ end -}}
