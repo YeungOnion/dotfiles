@@ -18,21 +18,16 @@ if status is-interactive
     if command -q bat
         set -gx PAGER bat -p
         set -g MANPAGER batman
-        set -Ux BAT_THEME_LIGHT OneHalfLight
-        set -Ux BAT_THEME_DARK Dracula
     else
         set -gx PAGER cat
     end
 
     # for tools I use directly and fisher funcs
-    set -g sponge_purge_only_on_exit true
     set -gx fzf_fd_opts --hidden --exclude="**/target/*" \
         --exclude="**/build/*" --exclude="**/{.mypy,.ruff}_cache/*" \
         --exclude="**/.git/{objects,refs,logs}/*" \
         --exclude="**/.pixi/env/*"
     set -gx fzf_git_log_opts --preview-window "down,70%"
-    set -gx EDITOR hx
-
     fish_add_path $RUSTUP_HOME/bin $CARGO_HOME/bin $GOPATH/bin $HOME/.local/bin $HOME/.pixi/bin
     source $__fish_config_dir/aliases.fish
 

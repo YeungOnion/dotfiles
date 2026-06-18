@@ -1,0 +1,18 @@
+#!/bin/bash
+set -eufo pipefail
+
+{{- $vars := dict }}
+{{- range $k, $v := .fish_universal }}
+  {{- $_ := set $vars $k $v }}
+{{- end }}
+{{- if .java_home }}
+  {{- $_ := set $vars "JAVA_HOME" .java_home }}
+{{- end }}
+
+# universal config: {{ $vars | toJson }}
+
+fish -c '
+{{- range $k, $v := $vars }}
+set -Ux {{ $k }} {{ $v }}
+{{- end }}
+'
