@@ -22,8 +22,9 @@ function __rezoomie_complete_render
             string match -qr '^-' -- $tok
             or set n_pos (math $n_pos + 1)
         end
-        test "$tok" = render
-        and set past_render 1
+        if test $past_render -eq 0; and test "$tok" = render
+            set past_render 1
+        end
     end
     switch $n_pos
         case 0
@@ -37,7 +38,7 @@ function __rezoomie_complete_role
     rezoomie (__rezoomie_root_args) role list --format tsv
 end
 
-function __rezoomie_complete_open_role
+function __rezoomie_complete_posting
     rezoomie (__rezoomie_root_args) posting list --format tsv
 end
 
@@ -63,11 +64,11 @@ complete -c rezoomie -n '__fish_seen_subcommand_from db; and __fish_seen_subcomm
 complete -c rezoomie -n '__fish_seen_subcommand_from db; and __fish_seen_subcommand_from seed' -l no-dry-run -d 'Preview row counts without inserting (default).'
 
 # posting subcommands.
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'schema' -d 'Print the posting JSON Schema.'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'commit' -d 'Write a posting TOML to postings/ with a date-slug filename.'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'list' -d 'List committed postings. Use --format tsv for fzf piping.'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'show' -d 'Emit a posting and its expectations/skills as TOML on stdout.'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'match' -d 'Rank narratives by keyword overlap with a posting'\''s expectations and skills.
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match' -a 'schema' -d 'Print the posting JSON Schema.'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match' -a 'commit' -d 'Write a posting TOML to postings/ with a date-slug filename.'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match' -a 'list' -d 'List postings. Pass QUERY to filter by slug substring.'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match' -a 'show' -d 'Emit a posting and its expectations/skills as TOML on stdout.'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match' -a 'match' -d 'Rank narratives by keyword overlap with a posting'\''s expectations and skills.
 
 Default output is TSV (narrative_id, text), best match first:
 
@@ -78,41 +79,42 @@ Use --format toml for [[jobs]]-grouped output suitable for agent workflows:
   posting show <id> | posting match - --format toml
 
 See `posting schema` for TOML field reference.'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and not __fish_seen_subcommand_from schema commit list show match bind' -a 'bind' -d 'Freeze a curation as a resume artifact, seeding any new bullets first.'
 
 # posting list options.
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from list' -l format -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (fzf-ready).'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from list' -l format -a 'table tsv' -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (machine-readable).'
 
 # posting match options.
 complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from match' -l format -d 'Output format: '\''tsv'\'' (narrative_id, text) or '\''toml'\'' ([[jobs]] grouped by role).'
 
 # resume subcommands.
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit generate render' -a 'list' -d 'List committed resumes. Use --format tsv for fzf piping.'
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit generate render' -a 'schema' -d 'Print the resume JSON Schema.'
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit generate render' -a 'commit' -d 'Commit a resume draft: write all jobs/bullets/resume to DB and save to resumes/.'
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit generate render' -a 'generate' -d 'Generate a tailored resume draft from a committed posting.'
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit generate render' -a 'render' -d 'Render a resume TOML to .tex or .html using a Jinja2 template.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'list' -d 'List resumes. Pass QUERY to filter by slug substring.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'schema' -d 'Print the resume JSON Schema.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'commit' -d 'Commit a resume draft: write all jobs/bullets/resume to DB and save to resumes/.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'render' -d 'Render a resume TOML to .tex or .html using a Jinja2 template.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'assemble' -d 'Assemble a ResumeDraft from narrative IDs → [[jobs]] TOML on stdout.'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and not __fish_seen_subcommand_from list schema commit render assemble merge' -a 'merge' -d 'Merge multiple ResumeDraft TOML sources into one, set-unioning bullets per role.'
 
 # resume list options.
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from list' -l format -a 'table tsv' -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (fzf-ready).'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from list' -l format -a 'table tsv' -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (machine-readable).'
 
 # resume render options.
 complete -c rezoomie -F -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from render' -s o -l output -d 'Output file path. Defaults to stdout.'
 complete -c rezoomie -F -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from render' -l css -d 'CSS file to inline into <style> tags (HTML only).'
 
 # role subcommands.
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit find list show dump' -a 'commit' -d 'Seed the corpus: write roles, bullets, and attributions to the DB.'
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit find list show dump' -a 'find' -d 'Search roles by keyword and print (role_id, slug) pairs.'
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit find list show dump' -a 'list' -d 'List history roles. Use --format tsv for fzf piping.'
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit find list show dump' -a 'show' -d 'Emit a role and its bullets as a [[jobs]] TOML entry on stdout.'
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit find list show dump' -a 'dump' -d 'Emit all roles and bullets as TOML on stdout.'
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit list show dump' -a 'commit' -d 'Seed the corpus: write roles, bullets, and attributions to the DB.'
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit list show dump' -a 'list' -d 'List roles. Pass QUERY to filter by slug substring.'
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit list show dump' -a 'show' -d 'Emit a role and its bullets as a [[jobs]] TOML entry on stdout.'
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and not __fish_seen_subcommand_from commit list show dump' -a 'dump' -d 'Emit roles as TOML, or narratives as TSV/table. Pass QUERY to filter by role slug.'
 
 # role list options.
-complete -c rezoomie -n '__fish_seen_subcommand_from role; and __fish_seen_subcommand_from list' -l format -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (fzf-ready).'
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and __fish_seen_subcommand_from list' -l format -a 'table tsv' -d 'Output format: '\''table'\'' (human-readable) or '\''tsv'\'' (machine-readable).'
+
+# role dump options.
+complete -c rezoomie -n '__fish_seen_subcommand_from role; and __fish_seen_subcommand_from dump' -l format -a 'toml tsv table' -d 'Output format: '\''toml'\'' (default), '\''tsv'\'' (one line per narrative), or '\''table'\''.'
 
 # Dynamic completions.
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from bind' -a '(__rezoomie_complete_open_role)'
-complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from show' -a '(__rezoomie_complete_open_role)'
-complete -c rezoomie -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from generate' -a '(__rezoomie_complete_open_role)'
+complete -c rezoomie -n '__fish_seen_subcommand_from posting; and __fish_seen_subcommand_from show' -a '(__rezoomie_complete_posting)'
+complete -c rezoomie -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from commit' -a '(__rezoomie_complete_posting)'
 complete -c rezoomie -n '__fish_seen_subcommand_from resume; and __fish_seen_subcommand_from render' -a '(__rezoomie_complete_render)'
 complete -c rezoomie -n '__fish_seen_subcommand_from role; and __fish_seen_subcommand_from show' -a '(__rezoomie_complete_role)'
