@@ -30,7 +30,6 @@ function mkcd --wraps=mkdir
 end
 
 # Prevents accidentally clobbering files.
-alias rm 'rm -i'
 alias cp 'cp -i'
 alias mv 'mv -i'
 
