@@ -12,7 +12,7 @@ SCRIPTS=(
 
 fail=0
 ok()   { echo "ok: $*"; }
-fail() { echo "FAIL: $*"; fail=1; }
+report_fail() { echo "FAIL: $*"; fail=1; }
 
 # Clear script state so dry-run shows the full plan
 chezmoi state reset --force 2>/dev/null || true
@@ -28,7 +28,7 @@ for script in "${SCRIPTS[@]}"; do
     if echo "$plan" | grep -qF ".chezmoiscripts/${script}.sh"; then
         ok "$script present in plan"
     else
-        fail "$script missing from plan"
+        report_fail "$script missing from plan"
     fi
 done
 
@@ -42,18 +42,19 @@ for i in "${!SCRIPTS[@]}"; do
     if [[ -n "$line_prev" && -n "$line_curr" && "$line_prev" -lt "$line_curr" ]]; then
         ok "$prev before $curr"
     else
-        fail "$prev not before $curr (lines: ${line_prev:-missing} vs ${line_curr:-missing})"
+        report_fail "$prev not before $curr (lines: ${line_prev:-missing} vs ${line_curr:-missing})"
     fi
 done
 
 # Assert no unexpected scripts appear (catches stray scripts without numeric prefix)
-unexpected=$(echo "$plan" | grep -oP '(?<=\.chezmoiscripts/)[^.]+(?=\.sh)' \
+unexpected=$(echo "$plan" | grep '\.chezmoiscripts/' \
+    | sed 's|.*\.chezmoiscripts/||; s|\.sh.*||' \
     | grep -vE "^(01-bootstrap-package-managers|02-install-packages|03-bat-symlink|04-fish-universal)$" \
     || true)
 if [[ -z "$unexpected" ]]; then
     ok "no unexpected scripts in plan"
 else
-    fail "unexpected scripts in plan: $unexpected"
+    report_fail "unexpected scripts in plan: $unexpected"
 fi
 
 exit $fail
