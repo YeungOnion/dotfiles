@@ -1,0 +1,59 @@
+#!/bin/bash
+# Orchestration test: verify chezmoi's execution plan contains all scripts in correct order.
+# Clears scriptState to get the full plan, asserts order, then chezmoi apply restores state.
+set -uo pipefail
+
+SCRIPTS=(
+    "01-bootstrap-package-managers"
+    "02-install-packages"
+    "03-bat-symlink"
+    "04-fish-universal"
+)
+
+fail=0
+ok()   { echo "ok: $*"; }
+fail() { echo "FAIL: $*"; fail=1; }
+
+# Clear script state so dry-run shows the full plan
+chezmoi state reset --force 2>/dev/null || true
+
+# Capture the plan; chezmoi apply --dry-run --verbose emits diff --git lines per script
+plan=$(chezmoi apply --dry-run --verbose 2>&1)
+
+# Restore state so subsequent chezmoi apply calls behave normally
+chezmoi apply --quiet 2>/dev/null || true
+
+# Assert each expected script appears in the plan
+for script in "${SCRIPTS[@]}"; do
+    if echo "$plan" | grep -qF ".chezmoiscripts/${script}.sh"; then
+        ok "$script present in plan"
+    else
+        fail "$script missing from plan"
+    fi
+done
+
+# Assert correct execution order: each script's diff header appears before the next
+for i in "${!SCRIPTS[@]}"; do
+    [[ $i -eq 0 ]] && continue
+    prev="${SCRIPTS[$((i-1))]}"
+    curr="${SCRIPTS[$i]}"
+    line_prev=$(echo "$plan" | grep -nF ".chezmoiscripts/${prev}.sh" | head -1 | cut -d: -f1)
+    line_curr=$(echo "$plan" | grep -nF ".chezmoiscripts/${curr}.sh" | head -1 | cut -d: -f1)
+    if [[ -n "$line_prev" && -n "$line_curr" && "$line_prev" -lt "$line_curr" ]]; then
+        ok "$prev before $curr"
+    else
+        fail "$prev not before $curr (lines: ${line_prev:-missing} vs ${line_curr:-missing})"
+    fi
+done
+
+# Assert no unexpected scripts appear (catches stray scripts without numeric prefix)
+unexpected=$(echo "$plan" | grep -oP '(?<=\.chezmoiscripts/)[^.]+(?=\.sh)' \
+    | grep -vE "^(01-bootstrap-package-managers|02-install-packages|03-bat-symlink|04-fish-universal)$" \
+    || true)
+if [[ -z "$unexpected" ]]; then
+    ok "no unexpected scripts in plan"
+else
+    fail "unexpected scripts in plan: $unexpected"
+fi
+
+exit $fail
