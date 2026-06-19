@@ -22,7 +22,6 @@ end
 
 @echo "chezmoi add excludes fisher-managed files"
 
-set -l before (chezmoi managed ~/.config/fish/functions 2>/dev/null | sort)
 chezmoi add ~/.config/fish/functions 2>/dev/null
 set -l after (chezmoi managed ~/.config/fish/functions 2>/dev/null | sort)
 

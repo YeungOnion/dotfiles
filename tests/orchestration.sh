@@ -15,13 +15,13 @@ ok()   { echo "ok: $*"; }
 report_fail() { echo "FAIL: $*"; fail=1; }
 
 # Clear script state so dry-run shows the full plan
-chezmoi state reset --force 2>/dev/null || true
+chezmoi state delete-bucket scriptState 2>/dev/null || true
 
 # Capture the plan; chezmoi apply --dry-run --verbose emits diff --git lines per script
 plan=$(chezmoi apply --dry-run --verbose 2>&1)
 
 # Restore state so subsequent chezmoi apply calls behave normally
-chezmoi apply 2>/dev/null || true
+chezmoi apply > /dev/null 2>&1 || true
 
 # Assert each expected script appears in the plan
 for script in "${SCRIPTS[@]}"; do

@@ -49,6 +49,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/t
 # Invalidated by: install-packages script or .chezmoidata.toml changes.
 
 FROM package-managers-base AS packages
+# Re-COPY forces cache invalidation when package list changes independently of bootstrap
 COPY --chown=testuser:testuser home/.chezmoidata.toml \
     /home/testuser/.local/share/chezmoi/home/.chezmoidata.toml
 COPY --chown=testuser:testuser \
