@@ -1,6 +1,7 @@
 #!/bin/bash
 # Orchestration test: verify chezmoi's execution plan contains all scripts in correct order.
-# Clears scriptState to get the full plan, asserts order, then chezmoi apply restores state.
+# Uses an isolated state file for the dry-run so results reflect a fresh-machine view
+# without touching or needing to restore the real state.
 set -uo pipefail
 
 SCRIPTS=(
@@ -14,14 +15,16 @@ fail=0
 ok()   { echo "ok: $*"; }
 report_fail() { echo "FAIL: $*"; fail=1; }
 
-# Clear script state so dry-run shows the full plan
-chezmoi state delete-bucket scriptState 2>/dev/null || true
+# Use an isolated state file: run_onchange_ scripts are tracked in entryState (by
+# destination path), not just scriptState, so clearing scriptState alone would miss them.
+# An isolated non-existent path lets chezmoi create a fresh BoltDB, giving a
+# fresh-machine view without touching real state. mktemp would create an empty
+# (invalid BoltDB) file, so we use a PID-unique path instead.
+_state_file="/tmp/chezmoi-orch-state-$$.boltdb"
+trap 'rm -f "$_state_file"' EXIT
 
 # Capture the plan; chezmoi apply --dry-run --verbose emits diff --git lines per script
-plan=$(chezmoi apply --dry-run --verbose 2>&1)
-
-# Restore state so subsequent chezmoi apply calls behave normally
-chezmoi apply > /dev/null 2>&1 || true
+plan=$(chezmoi apply --persistent-state "$_state_file" --dry-run --verbose 2>&1)
 
 # Assert each expected script appears in the plan
 for script in "${SCRIPTS[@]}"; do
