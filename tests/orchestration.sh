@@ -21,7 +21,7 @@ chezmoi state reset --force 2>/dev/null || true
 plan=$(chezmoi apply --dry-run --verbose 2>&1)
 
 # Restore state so subsequent chezmoi apply calls behave normally
-chezmoi apply --quiet 2>/dev/null || true
+chezmoi apply 2>/dev/null || true
 
 # Assert each expected script appears in the plan
 for script in "${SCRIPTS[@]}"; do
