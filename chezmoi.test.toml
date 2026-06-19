@@ -1,15 +1,2 @@
 [data]
-  brew_packages = [
-    "fish",
-    "git",
-    "jj",
-  ]
-  brew_packages_linux = []
-  brew_packages_darwin = []
-  cargo_plugins = [
-    "nextest",
-  ]
-  cargo_binaries = []
-  uv_packages = [
-    "py-spy",
-  ]
+  java_home = ""
