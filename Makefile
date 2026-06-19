@@ -1,36 +1,20 @@
-.PHONY: apply-dotfiles apply-packages test-unit test test-smoke
+.PHONY: test-orchestration test-integration test-unit test-smoke
 
-FISHTAPE       := fish -c 'fishtape'
-SMOKE_IMAGE    := chezmoi-smoke
-SMOKE_SRC      := /home/testuser/.local/share/chezmoi
-CHEZMOI_SOURCE ?= $(shell chezmoi source-path)
-SCRIPTS_DIR    := $(CHEZMOI_SOURCE)/.chezmoiscripts
+SMOKE_IMAGE := chezmoi-smoke
+SMOKE_SRC   := /home/testuser/.local/share/chezmoi
 
-UNIT_TESTS := \
-	tests/fish/chezmoi_nudge_test.fish \
-	tests/fish/git_extras_test.fish
+test-orchestration:
+	bash tests/orchestration.sh
 
-ALL_TESTS := \
-	$(UNIT_TESTS) \
-	tests/fish/fisher_chezmoi_test.fish \
-	tests/fish/fisher_cold_install_test.fish
-
-SMOKE_TESTS := $(addprefix $(SMOKE_SRC)/,$(ALL_TESTS))
-
-apply-dotfiles:
-	chezmoi apply --source=$(CHEZMOI_SOURCE) --exclude=scripts
-
-apply-packages:
-	chezmoi apply --source=$(CHEZMOI_SOURCE) --include=scripts --source-path $(SCRIPTS_DIR)/run_onchange_install-packages.sh.tmpl
+test-integration:
+	bash tests/integration.sh
 
 test-unit:
-	fish -c 'fishtape $(UNIT_TESTS)'
-
-test:
-	fish -c 'fishtape $(ALL_TESTS)'
+	fish -c 'fishtape tests/fish/chezmoi_nudge_test.fish \
+	         tests/fish/fisher_chezmoi_test.fish \
+	         tests/fish/fisher_cold_install_test.fish \
+	         tests/fish/git_extras_test.fish'
 
 test-smoke:
 	DOCKER_BUILDKIT=1 docker build --target smoke -t $(SMOKE_IMAGE) .
-	docker run --rm $(SMOKE_IMAGE) fish -c 'fishtape $(SMOKE_TESTS)'
-	docker run --rm $(SMOKE_IMAGE) fish -c \
-	    "jj --version && functions -q fisher && cargo nextest --version && uv tool list | grep -q py-spy"
+	docker run --rm $(SMOKE_IMAGE) make -C $(SMOKE_SRC) test-orchestration test-integration
