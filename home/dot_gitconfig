@@ -8,13 +8,13 @@
 [core]
     editor = hx
     pager = delta --pager='less -R' --line-numbers --side-by-side --wrap-max-lines=10
-    excludesFile = /home/orion/.config/git/exclude
+    excludesFile = ~/.config/git/exclude
 
 [path]
     followTags = true
 
 [include]
-    path = /home/orion/.config/delta/themes.gitconfig
+    path = ~/.config/delta/themes.gitconfig
 [delta]
     features = colibri
 
