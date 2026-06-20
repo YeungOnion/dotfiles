@@ -27,8 +27,9 @@
 .config/fish/functions/_nvm_version_activate.fish
 .config/fish/functions/_nvm_version_deactivate.fish
 .config/fish/functions/_puffer_fish_expand_bang.fish
-.config/fish/functions/_puffer_fish_expand_dots.fish
-.config/fish/functions/_puffer_fish_expand_lastarg.fish
+.config/fish/functions/_puffer_fish_expand_buck.fish
+.config/fish/functions/_puffer_fish_expand_dot.fish
+.config/fish/functions/_puffer_fish_expand_star.fish
 .config/fish/functions/_sponge_clear_state.fish
 .config/fish/functions/_sponge_on_exit.fish
 .config/fish/functions/_sponge_on_postexec.fish
@@ -53,6 +54,7 @@
 .config/fish/conf.d/puffer_fish_key_bindings.fish
 .config/fish/conf.d/sponge.fish
 .config/fish/conf.d/z.fish
+.config/fish/completions/chezmoi.fish
 .config/fish/completions/fisher.fish
 .config/fish/completions/fishtape.fish
 .config/fish/completions/fzf_configure_bindings.fish
