@@ -19,6 +19,7 @@ brew_packages = [
   "ripgrep",
   "slides",
   "swi-prolog",
+  "television",
   "tmuxinator",
   "tree",
   "youplot",
