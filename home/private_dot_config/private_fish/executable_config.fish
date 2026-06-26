@@ -30,6 +30,7 @@ if status is-interactive
     set -gx fzf_git_log_opts --preview-window "down,70%"
     fish_add_path $RUSTUP_HOME/bin $CARGO_HOME/bin $GOPATH/bin $HOME/.local/bin $HOME/.pixi/bin
     source $__fish_config_dir/aliases.fish
+    set -g sponge_purge_only_on_exit true
 
     # projects
     command -q direnv && direnv hook fish | source \
