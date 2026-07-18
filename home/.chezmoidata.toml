@@ -56,3 +56,4 @@ uv_packages = [
   BAT_THEME_DARK = "Dracula"
   BAT_THEME_LIGHT = "OneHalfLight"
   EDITOR = "hx"
+  hydro_multiline = "true"

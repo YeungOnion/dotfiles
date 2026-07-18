@@ -9,6 +9,9 @@ set -gx CC cc
 
 if status is-interactive
 
+    # shell prompt
+    set -gx hydro_multiline true
+
     # fzf related
     set fd_cmd (command -s fd || command -s fdfind)
     set -g FZF_DEFAULT_COMMAND $fd_cmd
