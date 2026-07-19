@@ -1,0 +1,15 @@
+[Unit]
+Description=Poll Windows registry for light/dark theme, push into fish terminal_theme uvar
+
+[Service]
+Type=oneshot
+TimeoutStartSec=10s
+# systemd --user's default PATH omits locations the interactive shell relies
+# on: WSL's Windows-interop PATH addition (reg.exe under
+# /mnt/c/WINDOWS/system32, needed by __terminal_theme_query) and non-system
+# fish installs (e.g. Homebrew's /home/linuxbrew/.linuxbrew/bin). Both are
+# resolved once at chezmoi-apply time and prepended here so the script's own
+# `#!/usr/bin/env fish` shebang and its internal reg.exe call both resolve
+# exactly as they do interactively, instead of hardcoding either path.
+Environment=PATH={{ output "sh" "-c" "dirname \"$(command -v fish)\"" | trim }}:{{ output "sh" "-c" "dirname \"$(command -v reg.exe)\"" | trim }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=%h/.config/fish/scripts/terminal-theme-poll.fish

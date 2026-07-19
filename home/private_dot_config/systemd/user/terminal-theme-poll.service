@@ -1,7 +1,0 @@
-[Unit]
-Description=Poll Windows registry for light/dark theme, push into fish terminal_theme uvar
-
-[Service]
-Type=oneshot
-TimeoutStartSec=10s
-ExecStart=%h/.config/fish/scripts/terminal-theme-poll.fish
