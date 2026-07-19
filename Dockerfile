@@ -75,12 +75,17 @@ COPY --chown=testuser:testuser \
 RUN chezmoi apply --include=scripts
 
 # ── dotfiles ──────────────────────────────────────────────────────────────────
-# Deploys all managed files. Scripts are excluded (all already ran above).
+# Deploys all managed files, then runs any run_onchange_after_ scripts that
+# depend on those files already being in place (e.g. terminal-theme-timer,
+# which enables a systemd unit only after it has been deployed). 01-04 are
+# already recorded in state from earlier stages and are skipped as unchanged;
+# only run_onchange_after_05-terminal-theme-timer actually executes here.
 # Invalidated by: any dotfile change.
 
 FROM post-install AS dotfiles
 COPY --chown=testuser:testuser . /home/testuser/.local/share/chezmoi/
 RUN chezmoi apply --exclude=scripts
+RUN chezmoi apply --include=scripts
 
 # ── smoke ─────────────────────────────────────────────────────────────────────
 # Test runner: orchestration + integration tiers.

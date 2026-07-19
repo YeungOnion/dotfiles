@@ -3,7 +3,7 @@ Description=Poll Windows registry for light/dark theme, push into fish terminal_
 
 [Service]
 Type=oneshot
-TimeoutStartSec=10s
+TimeoutStartSec=1s
 # systemd --user's default PATH omits locations the interactive shell relies
 # on: WSL's Windows-interop PATH addition (reg.exe under
 # /mnt/c/WINDOWS/system32, needed by __terminal_theme_query) and non-system

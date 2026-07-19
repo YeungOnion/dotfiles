@@ -66,13 +66,34 @@ for f in \
     "$HOME/.config/fish/aliases.fish" \
     "$HOME/.config/fish/config.fish" \
     "$HOME/.config/fish/fish_plugins" \
-    "$HOME/.config/fish/conf.d/fisher_chezmoi_sync.fish"; do
+    "$HOME/.config/fish/conf.d/fisher_chezmoi_sync.fish" \
+    "$HOME/.config/fish/functions/__terminal_theme_poll_sync.fish" \
+    "$HOME/.config/fish/scripts/terminal-theme-poll.fish" \
+    "$HOME/.config/systemd/user/terminal-theme-poll.service" \
+    "$HOME/.config/systemd/user/terminal-theme-poll.timer"; do
     if [[ -f "$f" ]]; then
         ok "${f/$HOME/~} deployed"
     else
         check_fail "${f/$HOME/~} not deployed"
     fi
 done
+
+# terminal-theme-poll.fish must be executable (systemd invokes it directly)
+poll_script="$HOME/.config/fish/scripts/terminal-theme-poll.fish"
+if [[ -x "$poll_script" ]]; then
+    ok "terminal-theme-poll.fish is executable"
+else
+    check_fail "terminal-theme-poll.fish is not executable"
+fi
+
+# 05-terminal-theme-timer must be recorded in chezmoi state, same as other scripts
+if chezmoi state dump 2>/dev/null \
+        | jq -e '.scriptState // {} | to_entries[].value.name | select(contains("05-terminal-theme-timer"))' \
+        &>/dev/null; then
+    ok "05-terminal-theme-timer recorded in chezmoi state"
+else
+    check_fail "05-terminal-theme-timer not recorded in chezmoi state"
+fi
 
 # fish must start without stderr
 stderr=$(fish -c exit 2>&1)

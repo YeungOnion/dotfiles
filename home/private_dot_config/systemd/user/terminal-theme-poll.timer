@@ -3,7 +3,7 @@ Description=Periodic trigger for terminal-theme-poll.service
 
 [Timer]
 OnBootSec=5s
-OnUnitInactiveSec=15s
+OnUnitInactiveSec=60s
 
 [Install]
 WantedBy=timers.target
