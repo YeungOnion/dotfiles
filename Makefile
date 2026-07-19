@@ -14,7 +14,8 @@ test-unit:
 	         tests/fish/fisher_chezmoi_test.fish \
 	         tests/fish/fisher_cold_install_test.fish \
 	         tests/fish/git_extras_test.fish \
-	         tests/fish/terminal_theme_test.fish'
+	         tests/fish/terminal_theme_test.fish \
+	         tests/fish/terminal_theme_poll_test.fish'
 
 test-smoke:
 	DOCKER_BUILDKIT=1 docker build --target smoke -t $(SMOKE_IMAGE) .
