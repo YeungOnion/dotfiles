@@ -18,24 +18,6 @@ function __terminal_theme_query
         /v AppsUseLightTheme 2>/dev/null)
 end
 
-# Impure: read cache → update terminal_theme if changed → fire background refresh
-# Accepts cache path as argument for testability
-function __terminal_theme_sync
-    set -l cache $argv[1]
-    if test -f $cache
-        set -l theme (string trim (cat $cache))
-        if test "$theme" != "$terminal_theme"
-            set -g terminal_theme $theme
-        end
-    end
-    __terminal_theme_query > $cache &
-end
-
-# Event handler: called on each prompt, uses real cache path
-function __terminal_theme_on_prompt --on-event fish_prompt
-    __terminal_theme_sync ~/.cache/terminal_theme
-end
-
 # Pure: bat theme name for light|dark, respects BAT_THEME_LIGHT/BAT_THEME_DARK overrides
 function __terminal_theme_bat_name -a theme
     switch $theme

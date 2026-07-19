@@ -39,36 +39,6 @@ set -l _dark_reg "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersio
 @test "returns unknown for unrecognised value" \
     (__terminal_theme_parse "garbage") = unknown
 
-# ── Sync: reads cache, updates terminal_theme ─────────────────────────────────
-
-@echo "Sync: cache reads and terminal_theme updates"
-
-set -g _cache (mktemp)
-
-@test "sync sets terminal_theme to light when cache contains light" \
-    (echo light > $_cache; set -ge terminal_theme; __terminal_theme_sync $_cache; echo $terminal_theme) = light
-
-@test "sync sets terminal_theme to dark when cache contains dark" \
-    (echo dark > $_cache; set -ge terminal_theme; __terminal_theme_sync $_cache; echo $terminal_theme) = dark
-
-@test "sync updates terminal_theme when cached value differs" \
-    (echo dark > $_cache; set -g terminal_theme light; __terminal_theme_sync $_cache; echo $terminal_theme) = dark
-
-@test "sync leaves terminal_theme unchanged when cached value matches" \
-    (echo light > $_cache; set -g terminal_theme light; __terminal_theme_sync $_cache; echo $terminal_theme) = light
-
-@test "sync leaves terminal_theme unchanged when cache file is absent" \
-    (rm -f $_cache; set -g terminal_theme light; __terminal_theme_sync $_cache; echo $terminal_theme) = light
-
-# ── Integration: background job refreshes cache ───────────────────────────────
-
-@echo "Integration: background job writes valid theme to cache"
-
-@test "background query writes light or dark to cache within 500ms" \
-    (rm -f $_cache; __terminal_theme_sync $_cache; sleep 0.5; string match -qr '^(light|dark)$' (cat $_cache 2>/dev/null); and echo yes; or echo no) = yes
-
-rm -f $_cache
-
 # ── Theme name mapping: pure logic ────────────────────────────────────────────
 
 @echo "bat theme name mapping"
