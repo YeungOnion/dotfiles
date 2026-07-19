@@ -1,0 +1,9 @@
+[Unit]
+Description=Periodic trigger for terminal-theme-poll.service
+
+[Timer]
+OnBootSec=5s
+OnUnitInactiveSec=15s
+
+[Install]
+WantedBy=timers.target
