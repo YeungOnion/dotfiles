@@ -1,6 +1,6 @@
 ---
 name: ddd
-description: Use when a plan, PR/implementation review, or ADR proposal or rejection needs domain-driven-design analysis — identifying domain concepts affected by a change, checking ubiquitous-language consistency, or running a multi-persona challenge against the change.
+description: Use when a plan, PR, or ADR touches a system with real domain concepts — entities, business rules, subsystem boundaries — as opposed to a toy or puzzle problem with no domain model.
 ---
 
 # DDD Analysis
@@ -15,6 +15,15 @@ For any plan, PR, or ADR touching a system with real domain concepts:
 - **Check aggregate consistency boundaries**: does the change assume transactional consistency across what should be separate aggregates?
 
 Ground these checks in Evans' *Domain-Driven Design* (Ubiquitous Language, Bounded Context, Aggregate) and Vernon's *Implementing Domain-Driven Design* (context-mapping relationship patterns).
+
+### Example
+
+Plan: "Add a `retryCount` field to `Order` and have the billing service poll it to decide when to re-attempt a charge."
+
+- **Affected domain objects**: `Order` (aggregate) gains state; `BillingService` (domain service) gains a read dependency on it.
+- **Ubiquitous-language check**: the codebase already has "attempt" as the term for a charge try (`ChargeAttempt` entity exists elsewhere) — `retryCount` introduces a second word for the same concept. Flag it: reuse `attemptCount` or reference `ChargeAttempt` directly instead of a bare counter.
+- **Bounded-context check**: `Order` lives in the Ordering context, `BillingService` in the Billing context. Polling `Order` state from Billing is a Conformist-style dependency in the wrong direction — Billing should own retry state, and Ordering should publish charge-relevant events instead. Flag as a boundary violation, not just a style note.
+- **Aggregate consistency check**: does the poll read `Order.retryCount` transactionally with the charge attempt, or can they drift under concurrent updates? If drift is possible, the plan needs to say whether that's acceptable.
 
 ## Multi-Persona Review
 
