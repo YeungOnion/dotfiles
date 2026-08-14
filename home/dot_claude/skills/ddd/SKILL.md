@@ -5,6 +5,8 @@ description: Use when a plan, PR, or ADR touches a system with real domain conce
 
 # DDD Analysis
 
+**Scope:** this is a domain-modeling lens, not a general review. It won't surface concurrency bugs, rollback/compensation gaps, schema-ownership questions, or missing tests unless they happen to fall out of a domain-boundary violation — pair it with `adversarial-review-dimensions` (or an equivalent general review) rather than using it standalone.
+
 ## Core Analysis
 
 For any plan, PR, or ADR touching a system with real domain concepts:
