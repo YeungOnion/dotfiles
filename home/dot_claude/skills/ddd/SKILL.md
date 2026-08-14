@@ -1,8 +1,23 @@
 ---
 name: ddd
-description: Use when a plan or triage needs domain-driven-design analysis — identifying the domain concepts, entities, and services affected by a change. Placeholder — not yet fleshed out.
+description: Use when a plan, PR/implementation review, or ADR proposal or rejection needs domain-driven-design analysis — identifying domain concepts affected by a change, checking ubiquitous-language consistency, or running a multi-persona challenge against the change.
 ---
 
 # DDD Analysis
 
-Placeholder skill, referenced by `planning-conventions` and `triage-conventions`. Needs real content: how to identify domain concepts/entities/services, how to represent bounded contexts, and what "DDD conformance" means for a plan.
+## Core Analysis
+
+For any plan, PR, or ADR touching a system with real domain concepts:
+
+- **Identify affected domain objects**: which entities, value objects, aggregates, and domain services does this change touch? Name them explicitly — don't leave them implicit in the diff.
+- **Check ubiquitous-language consistency**: does the plan/PR use the same terms as the domain model and existing code, or does it introduce a synonym for something that already has a name? Language drift here is a defect, not style.
+- **Check bounded-context boundaries**: does the change cross a boundary between subsystems? If so, classify the relationship (Partnership, Customer-Supplier, Conformist, Anticorruption Layer, Open Host Service, Published Language, Separate Ways) and check the change respects it — e.g. a Conformist relationship shouldn't suddenly demand upstream changes.
+- **Check aggregate consistency boundaries**: does the change assume transactional consistency across what should be separate aggregates?
+
+Ground these checks in Evans' *Domain-Driven Design* (Ubiquitous Language, Bounded Context, Aggregate) and Vernon's *Implementing Domain-Driven Design* (context-mapping relationship patterns).
+
+## Multi-Persona Review
+
+For higher-stakes reviews (architectural plans, ADR proposal/rejection, PRs with significant domain impact), escalate beyond single-voice analysis by running the change past predefined domain and engineering personas who can challenge, accept, or offer middle-ground language. Any invoking agent — human or supervisor — can request this; it isn't gated behind human-only invocation.
+
+See `references/persona-review.md` for roster discovery, persona file schema, execution modes (independent / sequential / async-debate), and the synthesis output format.
