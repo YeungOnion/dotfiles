@@ -18,12 +18,26 @@ for plugin in $plugins
         (set -q _fisher_plugins && string match -q "*$plugin*" $_fisher_plugins && echo yes || echo no) = yes
 end
 
-# ── chezmoi add does not pick up fisher files ─────────────────────────────────
+# ── chezmoi add would not pick up fisher files ────────────────────────────────
 
 @echo "chezmoi add excludes fisher-managed files"
 
-chezmoi add ~/.config/fish/functions 2>/dev/null
-set -l after (chezmoi managed ~/.config/fish/functions 2>/dev/null | sort)
+# Read-only: --dry-run reports "warning: ignoring <rel>" per ignored path and
+# writes nothing. --no-pager and closed stdin keep a large diff from blocking.
+# `chezmoi ignored` is not usable here: it lists nothing for target-only files.
+# fish has no wildcard variable expansion: enumerate fisher's per-plugin file lists
+set -l fisher_files
+for var in (set -n | string match '_fisher_*_files')
+    set -a fisher_files (string replace -r '^~' $HOME $$var)
+end
+set -l ignored (chezmoi add --dry-run --verbose --no-pager $fisher_files </dev/null 2>&1 \
+    | string replace -rf '^chezmoi: warning: ignoring ' '')
 
-@test "__z.fish not added to chezmoi source" \
-    (contains -- .config/fish/functions/__z.fish $after && echo yes || echo no) = no
+@test "fisher recorded installed files" \
+    (count $fisher_files) -gt 0
+
+for f in $fisher_files
+    set -l rel (string replace -- "$HOME/" "" $f)
+    @test "$rel ignored by chezmoi add" \
+        (contains -- $rel $ignored && echo yes || echo no) = yes
+end
