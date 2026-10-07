@@ -66,7 +66,6 @@ for f in \
     "$HOME/.config/fish/aliases.fish" \
     "$HOME/.config/fish/config.fish" \
     "$HOME/.config/fish/fish_plugins" \
-    "$HOME/.config/fish/conf.d/fisher_chezmoi_sync.fish" \
     "$HOME/.config/fish/functions/__terminal_theme_poll_sync.fish" \
     "$HOME/.config/fish/scripts/terminal-theme-poll.fish" \
     "$HOME/.config/systemd/user/terminal-theme-poll.service" \
@@ -103,28 +102,25 @@ else
     check_fail "fish starts with stderr: $stderr"
 fi
 
-# chezmoiignore must have fisher block
+# retired sync hook must be removed by .chezmoiremove
+if [[ -e "$HOME/.config/fish/conf.d/fisher_chezmoi_sync.fish" ]]; then
+    check_fail "fisher_chezmoi_sync.fish still deployed"
+else
+    ok "fisher_chezmoi_sync.fish removed"
+fi
+
+# rendered ignore must cover fisher files and skip user-managed ones
 chezmoi_src=$(chezmoi source-path 2>/dev/null)
-chezmoiignore="$chezmoi_src/.chezmoiignore"
-if grep -qF '# fisher:begin' "$chezmoiignore" 2>/dev/null; then
-    ok "fisher:begin block in .chezmoiignore"
+rendered_ignore=$(chezmoi execute-template < "$chezmoi_src/.chezmoiignore" 2>/dev/null)
+if grep -qxF '.config/fish/functions/__z.fish' <<<"$rendered_ignore"; then
+    ok "fisher-owned __z.fish in rendered .chezmoiignore"
 else
-    check_fail "fisher:begin block missing from .chezmoiignore"
+    check_fail "fisher-owned __z.fish missing from rendered .chezmoiignore"
 fi
-
-if awk '/^# fisher:begin/{p=1;next} /^# fisher:end/{p=0} p && NF' \
-        "$chezmoiignore" 2>/dev/null | grep -q .; then
-    ok "fisher ignore block is non-empty"
+if grep -qF '__append_pipe_fzf.fish' <<<"$rendered_ignore"; then
+    check_fail "__append_pipe_fzf.fish incorrectly in rendered .chezmoiignore"
 else
-    check_fail "fisher ignore block is empty"
-fi
-
-# user-managed function must not appear in fisher ignore block
-if awk '/^# fisher:begin/{p=1;next} /^# fisher:end/{p=0} p' "$chezmoiignore" \
-        | grep -qF '__append_pipe_fzf.fish'; then
-    check_fail "__append_pipe_fzf.fish incorrectly in fisher ignore block"
-else
-    ok "__append_pipe_fzf.fish not in fisher ignore block"
+    ok "__append_pipe_fzf.fish not in rendered .chezmoiignore"
 fi
 
 exit $fail

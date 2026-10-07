@@ -22,9 +22,6 @@ set -l _stderr (fish -c exit 2>&1)
 @test "fish_plugins deployed to target" \
     (test -f ~/.config/fish/fish_plugins && echo yes || echo no) = yes
 
-@test "fisher_chezmoi_sync conf.d deployed" \
-    (test -f ~/.config/fish/conf.d/fisher_chezmoi_sync.fish && echo yes || echo no) = yes
-
 @test "chezmoi source-path resolves" \
     (test -n "$_chezmoi_src" && echo yes || echo no) = yes
 
@@ -50,23 +47,48 @@ set -l _plugins_script $_chezmoi_src/.chezmoiscripts/run_onchange_after_06-fish-
 @test "install-packages script no longer touches fisher" \
     (string match -q '*fisher*' < $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl; and echo yes; or echo no) = no
 
-# ── ignore file shape ─────────────────────────────────────────────────────────
+# ── ignore rendered from fisher state ─────────────────────────────────────────
 
-@echo ".chezmoiignore: fisher block"
+@echo ".chezmoiignore: rendered from fisher's record"
 
-set -l ignore_content (cat $_chezmoiignore 2>/dev/null)
+set -l _ignore_tmpl $_chezmoi_src/.chezmoiignore
+set -l rendered (chezmoi execute-template < $_ignore_tmpl 2>/dev/null)
 
-@test "fisher:begin marker present" \
-    (string match -q '*# fisher:begin*' "$ignore_content" && echo yes || echo no) = yes
+@test "retired sync hook not deployed" \
+    (test -e ~/.config/fish/conf.d/fisher_chezmoi_sync.fish && echo yes || echo no) = no
 
-@test "fisher:end marker present" \
-    (string match -q '*# fisher:end*' "$ignore_content" && echo yes || echo no) = yes
+@test "ignore template has no fisher:begin marker" \
+    (string match -q '*fisher:begin*' < $_ignore_tmpl; and echo yes; or echo no) = no
 
-set -l ignore_block (awk '/^# fisher:begin/{p=1; next} /^# fisher:end/{p=0} p' $_chezmoiignore)
+@test "rendered ignore lists a fisher-owned file" \
+    (contains -- .config/fish/functions/__z.fish $rendered && echo yes || echo no) = yes
 
-# __append_pipe_fzf.fish is chezmoi-managed (in source), so should not appear in the fisher block
-@test "chezmoi-managed __append_pipe_fzf.fish not in fisher block" \
-    (string match -q '*.config/fish/functions/__append_pipe_fzf.fish*' "$ignore_block" && echo yes || echo no) = no
+@test "rendered ignore lists static non-fisher entries" \
+    (contains -- .config/fish/completions/swamp.fish $rendered && echo yes || echo no) = yes
 
-@test "no duplicate lines in .chezmoiignore" \
-    (sort $_chezmoiignore | uniq -d | count) = 0
+@test "rendered ignore omits chezmoi-managed __append_pipe_fzf.fish" \
+    (contains -- .config/fish/functions/__append_pipe_fzf.fish $rendered && echo yes || echo no) = no
+
+@test "rendered ignore has no duplicate entries" \
+    (printf '%s\n' $rendered | sort | uniq -d | count) = 0
+
+# Fresh machine: fish not on PATH yet → only static lines, no error
+set -l _chezmoi_bin (command -v chezmoi)
+set -l no_fish (env PATH=/usr/bin:/bin $_chezmoi_bin execute-template < $_ignore_tmpl 2>&1; echo "status=$status")
+
+@test "renders without fish on PATH" \
+    $no_fish[-1] = status=0
+
+@test "without fish on PATH no fisher entries render" \
+    (contains -- .config/fish/functions/__z.fish $no_fish && echo yes || echo no) = no
+
+# fish present but fisher never ran → empty universal scope, still no error
+set -l _empty_xdg (mktemp -d)
+set -l no_fisher (env XDG_CONFIG_HOME=$_empty_xdg $_chezmoi_bin --config ~/.config/chezmoi/chezmoi.toml execute-template < $_ignore_tmpl 2>&1; echo "status=$status")
+trash $_empty_xdg
+
+@test "renders with empty fish universal scope" \
+    $no_fisher[-1] = status=0
+
+@test "with empty universal scope no fisher entries render" \
+    (contains -- .config/fish/functions/__z.fish $no_fisher && echo yes || echo no) = no

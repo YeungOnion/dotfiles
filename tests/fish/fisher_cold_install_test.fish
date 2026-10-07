@@ -5,8 +5,6 @@
 set -g _chezmoi_src (chezmoi source-path 2>/dev/null)
 set -g _chezmoiignore $_chezmoi_src/.chezmoiignore
 
-source ~/.config/fish/conf.d/fisher_chezmoi_sync.fish 2>/dev/null
-
 # ── all plugins from fish_plugins are installed ───────────────────────────────
 
 @echo "fisher plugins installed"
