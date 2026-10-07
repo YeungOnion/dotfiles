@@ -1,0 +1,35 @@
+# ~/.config/tmuxinator/scratch.yml
+#
+# mux start scratch          -> latest date dir in ~/sandbox, session "scratch"
+# mux start scratch <path>   -> ~/sandbox/<path> (created if needed), session named from <path>
+<%
+  require "fileutils"
+  sandbox = File.expand_path("~/sandbox")
+  if @args.empty?
+    latest = Dir.children(sandbox).grep(/\A\d+\z/).max_by(&:to_i)
+    root = File.join(sandbox, latest)
+    name = "scratch"
+  else
+    root = File.expand_path(@args[0], sandbox)
+    FileUtils.mkdir_p(root)
+    # tmux disallows '.' and ':' in session names
+    name = @args[0].gsub(%r{\A/+|/+\z}, "").tr("/.:", "-")
+  end
+  # Claude Code stores sessions under ~/.claude/projects/<root with non-alphanumerics as '-'>
+  claude_history = File.expand_path("~/.claude/projects/#{root.gsub(/[^a-zA-Z0-9]/, '-')}")
+  claude = Dir.glob(File.join(claude_history, "*.jsonl")).empty? ? "claude" : "claude --continue"
+%>
+
+name: <%= name %>
+root: <%= root %>
+
+startup_window: claude
+
+windows:
+  - editor:
+      panes:
+        - editor: hx
+        - vcs: lazygit
+      focused_pane: editor
+  - claude: <%= claude %>
+  - shell: clear
