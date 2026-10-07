@@ -84,8 +84,10 @@ RUN chezmoi apply --exclude=scripts
 RUN chezmoi apply --include=scripts
 
 # ── smoke ─────────────────────────────────────────────────────────────────────
-# Test runner: orchestration + integration tiers.
+# Test runner: orchestration + integration + container tiers.
+# CHEZMOI_TEST_CONTAINER gates tests that write to the source and home.
 
 FROM dotfiles AS smoke
 WORKDIR /home/testuser/.local/share/chezmoi
-CMD ["make", "test-orchestration", "test-integration"]
+ENV CHEZMOI_TEST_CONTAINER=1
+CMD ["make", "test-orchestration", "test-integration", "test-container"]
