@@ -44,6 +44,17 @@ set -l _plugins_script $_chezmoi_src/.chezmoiscripts/run_onchange_after_06-fish-
 @test "fish-plugins script passes bash syntax check" \
     (test -f $_plugins_script; and chezmoi execute-template < $_plugins_script 2>/dev/null | bash -n; and echo yes; or echo no) = yes
 
+# Run the rendered fish heredoc with fisher stubbed: `fisher update` exits 0 even
+# when a download fails, so the script itself must notice a missing plugin.
+set -l _plugins_fish (chezmoi execute-template < $_plugins_script 2>/dev/null | sed -n "/<<'FISH'/,/^FISH\$/p" | sed '1d;$d' | string collect)
+set -l _data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}{{ "\n" }}{{ end }}')
+
+@test "fish-plugins script fails when a listed plugin is missing" \
+    (fish --no-config -c "function fisher; end; set -g _fisher_plugins jorgebucaran/fisher; $_plugins_fish" >/dev/null 2>&1; echo $status) = 1
+
+@test "fish-plugins script succeeds when every listed plugin is installed" \
+    (fish --no-config -c "function fisher; end; set -g _fisher_plugins \$argv; $_plugins_fish" $_data_plugins >/dev/null 2>&1; echo $status) = 0
+
 @test "install-packages script no longer touches fisher" \
     (string match -q '*fisher*' < $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl; and echo yes; or echo no) = no
 

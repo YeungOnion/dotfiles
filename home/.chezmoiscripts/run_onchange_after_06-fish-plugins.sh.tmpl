@@ -16,4 +16,9 @@ if not functions -q fisher
     or exit 1
 end
 fisher update
+# fisher update exits 0 when a single download fails; confirm every listed plugin landed
+{{ range .fish_plugins -}}
+contains -- {{ . | lower | quote }} (string lower -- $_fisher_plugins)
+or begin; echo "fisher: {{ . }} not installed" >&2; exit 1; end
+{{ end -}}
 FISH

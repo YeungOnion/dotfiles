@@ -50,6 +50,12 @@ universal vars) — an mtime-only change, not a test side effect.
   template must use plain `fish -c`.
 - `.chezmoiremove` errors with `inconsistent state` while the source file still exists:
   delete the source file in the same change.
+- Retiring a conf.d hook deletes the file but not functions already loaded in open
+  shells. After rolling out the removal of `fisher_chezmoi_sync.fish`, `exec fish` (or
+  close) every open shell: the old `_fisher_postexec_sync` fires on `fisher install|update|remove`
+  and appends a `# fisher:begin` block to `home/.chezmoiignore`. The unit test
+  "ignore template has no fisher:begin marker" detects it; undo with
+  `git checkout -- home/.chezmoiignore`.
 
 ## chezmoi.test.toml
 

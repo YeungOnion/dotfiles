@@ -679,6 +679,8 @@ Expected: `# ok`; empty status; `removed`; clean tree.
 
 On every other machine, roll out with `chezmoi update` (pull and apply together) and do not run `fisher install|remove` between pulling and applying: until apply removes it, the old hook would rewrite the templated `.chezmoiignore` in the source.
 
+On every machine, after applying, `exec fish` (or close) every open fish shell: shells started before the rollout still have the old hook loaded in memory, and it fires on `fisher install|update|remove`.
+
 ## Out of scope
 
 - Pinning plugin versions (fisher installs from GitHub HEAD) and brew versions.
