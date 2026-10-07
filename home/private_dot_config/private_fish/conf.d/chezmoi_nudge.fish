@@ -23,5 +23,12 @@ function __chezmoi_nudge --on-event fish_postexec
         end
     end
 
+    # Branch 3: plugin nudge — the plugin list lives in .chezmoidata.toml
+    if string match -rq '^fisher\s+(install|remove)\b' -- $cmd
+        if test -n "$__chezmoi_src"
+            echo "chezmoi?: hx $__chezmoi_src/.chezmoidata.toml (fish_plugins)" >&2
+        end
+    end
+
     return $prev_status
 end

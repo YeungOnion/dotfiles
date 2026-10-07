@@ -2,7 +2,8 @@
 # Tests for chezmoi package nudge hook
 # Run: fishtape tests/fish/chezmoi_nudge_test.fish
 
-set -l _source_err (source ~/.config/fish/conf.d/chezmoi_nudge.fish 2>&1)
+set -g _repo_root (path resolve (status dirname)/../..)
+set -l _source_err (source $_repo_root/home/private_dot_config/private_fish/conf.d/chezmoi_nudge.fish 2>&1)
 
 @test "chezmoi_nudge.fish sources without stderr" \
     (count $_source_err) = 0
@@ -60,3 +61,19 @@ set -l _source_err (source ~/.config/fish/conf.d/chezmoi_nudge.fish 2>&1)
 
 @test "non-editor command with chezmoiscripts in path produces no apply reminder" \
     (string match -q '*chezmoi apply*' (__chezmoi_nudge "cat .chezmoiscripts/run_onchange_install-brew.sh.tmpl" 2>&1) && echo yes || echo no) = no
+
+# ── Branch 3: fish plugins live in chezmoi data ───────────────────────────────
+
+@echo "Branch 3: fisher install/remove nudges toward .chezmoidata.toml"
+
+@test "fisher install triggers data nudge" \
+    (string match -q '*.chezmoidata.toml*' (__chezmoi_nudge "fisher install foo/bar" 2>&1) && echo yes || echo no) = yes
+
+@test "fisher remove triggers data nudge" \
+    (string match -q '*.chezmoidata.toml*' (__chezmoi_nudge "fisher remove foo/bar" 2>&1) && echo yes || echo no) = yes
+
+@test "fisher update does not trigger" \
+    (string match -q 'chezmoi?:*' (__chezmoi_nudge "fisher update" 2>&1) && echo yes || echo no) = no
+
+@test "fisher list does not trigger" \
+    (string match -q 'chezmoi?:*' (__chezmoi_nudge "fisher list" 2>&1) && echo yes || echo no) = no
