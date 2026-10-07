@@ -10,6 +10,7 @@ SCRIPTS=(
     "03-bat-symlink"
     "04-fish-universal"
     "05-terminal-theme-timer"
+    "06-fish-plugins"
 )
 
 fail=0
@@ -53,7 +54,7 @@ done
 # Assert no unexpected scripts appear (catches stray scripts without numeric prefix)
 unexpected=$(echo "$plan" | grep '\.chezmoiscripts/' \
     | sed 's|.*\.chezmoiscripts/||; s|\.sh.*||' \
-    | grep -vE "^(01-bootstrap-package-managers|02-install-packages|03-bat-symlink|04-fish-universal|05-terminal-theme-timer)$" \
+    | grep -vE "^(01-bootstrap-package-managers|02-install-packages|03-bat-symlink|04-fish-universal|05-terminal-theme-timer|06-fish-plugins)$" \
     || true)
 if [[ -z "$unexpected" ]]; then
     ok "no unexpected scripts in plan"

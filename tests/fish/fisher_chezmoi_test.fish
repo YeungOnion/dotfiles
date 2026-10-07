@@ -28,6 +28,28 @@ set -l _stderr (fish -c exit 2>&1)
 @test "chezmoi source-path resolves" \
     (test -n "$_chezmoi_src" && echo yes || echo no) = yes
 
+# ── plugin list is chezmoi data ───────────────────────────────────────────────
+
+@echo "fish_plugins: rendered from .chezmoidata.toml"
+
+@test "fish_plugins data renders the deployed plugin list" \
+    "$(chezmoi execute-template '{{ range .fish_plugins }}{{ . }}{{ "\n" }}{{ end }}' 2>&1)" = "$(cat ~/.config/fish/fish_plugins)"
+
+@test "fish_plugins has no pending chezmoi diff" \
+    (chezmoi diff --no-pager ~/.config/fish/fish_plugins </dev/null 2>&1 | count) = 0
+
+set -l _plugins_script $_chezmoi_src/.chezmoiscripts/run_onchange_after_06-fish-plugins.sh.tmpl
+
+@test "fish-plugins script renders fisher update" \
+    (chezmoi execute-template < $_plugins_script 2>/dev/null | string match -q 'fisher update'; and echo yes; or echo no) = yes
+
+# test -f first: `bash -n` on empty stdin succeeds, which would pass vacuously
+@test "fish-plugins script passes bash syntax check" \
+    (test -f $_plugins_script; and chezmoi execute-template < $_plugins_script 2>/dev/null | bash -n; and echo yes; or echo no) = yes
+
+@test "install-packages script no longer touches fisher" \
+    (string match -q '*fisher*' < $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl; and echo yes; or echo no) = no
+
 # ── ignore file shape ─────────────────────────────────────────────────────────
 
 @echo ".chezmoiignore: fisher block"

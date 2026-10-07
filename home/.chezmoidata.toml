@@ -51,6 +51,19 @@ uv_packages = [
   "rename",
   "ruff-lsp",
 ]
+fish_plugins = [
+  "patrickf1/fzf.fish",
+  "jethrokuan/z",
+  "jorgebucaran/autopair.fish",
+  "jorgebucaran/getopts.fish",
+  "jorgebucaran/hydro",
+  "jorgebucaran/nvm.fish",
+  "jorgebucaran/replay.fish",
+  "meaningful-ooo/sponge",
+  "nickeb96/puffer-fish",
+  "jorgebucaran/fisher",
+  "jorgebucaran/fishtape",
+]
 
 [fish_universal]
   BAT_THEME_DARK = "Dracula"

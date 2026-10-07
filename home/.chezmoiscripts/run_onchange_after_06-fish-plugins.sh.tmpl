@@ -1,0 +1,19 @@
+#!/bin/bash
+set -eufo pipefail
+# Runs after files are deployed, so ~/.config/fish/fish_plugins (rendered from
+# .chezmoidata.toml fish_plugins) exists for `fisher update` to read.
+# Re-runs when the list changes: {{ .fish_plugins | join " " }}
+
+{{ if eq .chezmoi.os "darwin" -}}
+fish_bin={{ or (lookPath "fish") "/opt/homebrew/bin/fish" }}
+{{ else -}}
+fish_bin={{ or (lookPath "fish") "/home/linuxbrew/.linuxbrew/bin/fish" }}
+{{ end -}}
+
+"$fish_bin" <<'FISH'
+if not functions -q fisher
+    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+    or exit 1
+end
+fisher update
+FISH

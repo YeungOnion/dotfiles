@@ -55,10 +55,6 @@ COPY --chown=testuser:testuser home/.chezmoidata.toml \
 COPY --chown=testuser:testuser \
     home/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl \
     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
-# install-packages template includes fish_plugins for hash tracking
-COPY --chown=testuser:testuser \
-    home/private_dot_config/private_fish/fish_plugins \
-    /home/testuser/.local/share/chezmoi/home/private_dot_config/private_fish/fish_plugins
 
 RUN chezmoi apply --include=scripts
 
