@@ -41,7 +41,7 @@ universal vars) — an mtime-only change, not a test side effect.
 
 ## fisher is orchestrated by chezmoi
 
-- Plugin list: `fish_plugins` in `.chezmoidata.toml`. `~/.config/fish/fish_plugins` is
+- Plugin list: `fish_plugins` in `home/.chezmoidata/fish.json`. `~/.config/fish/fish_plugins` is
   rendered from it; add plugins there, not with `fisher install` (the nudge hook says so).
 - `run_onchange_after_06-fish-plugins` runs `fisher update` after deploy. `fisher update`
   writes the file back in file order, so data spelling must match fisher's canonical form.
@@ -60,4 +60,4 @@ universal vars) — an mtime-only change, not a test side effect.
 ## chezmoi.test.toml
 
 Contains only `[data]\n  java_home = ""` — just enough to satisfy `promptStringOnce`
-without interactive prompts. Package lists come from `.chezmoidata.toml` (source tree).
+without interactive prompts. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/` (source tree).

@@ -16,7 +16,8 @@ test-unit:
 	         tests/fish/fisher_cold_install_test.fish \
 	         tests/fish/terminal_theme_test.fish \
 	         tests/fish/terminal_theme_poll_test.fish \
-	         tests/fish/scratch_test.fish'
+	         tests/fish/scratch_test.fish \
+	         tests/fish/chezmoi_data_test.fish'
 
 # Writes to the source and ~/.config: each test file refuses to run outside the smoke container.
 test-container:

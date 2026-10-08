@@ -5,7 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # chezmoi renders .chezmoi.toml.tmpl (promptStringOnce reads pre-seeded config)
 # then runs bootstrap: installs brew, rustup, cargo-binstall, uv.
 # Records bootstrap hash in chezmoi state DB.
-# Invalidated by: bootstrap script or .chezmoidata.toml changes.
+# Invalidated by: bootstrap script or .chezmoidata/ changes.
 
 FROM ubuntu:24.04 AS package-managers-base
 ARG DEBIAN_FRONTEND
@@ -30,8 +30,8 @@ COPY --chown=testuser:testuser .chezmoiroot \
     /home/testuser/.local/share/chezmoi/.chezmoiroot
 COPY --chown=testuser:testuser home/.chezmoi.toml.tmpl \
     /home/testuser/.local/share/chezmoi/home/.chezmoi.toml.tmpl
-COPY --chown=testuser:testuser home/.chezmoidata.toml \
-    /home/testuser/.local/share/chezmoi/home/.chezmoidata.toml
+COPY --chown=testuser:testuser home/.chezmoidata \
+    /home/testuser/.local/share/chezmoi/home/.chezmoidata
 COPY --chown=testuser:testuser \
     home/.chezmoiscripts/run_onchange_01-bootstrap-package-managers.sh.tmpl \
     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
@@ -46,12 +46,12 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/t
 # ── packages ──────────────────────────────────────────────────────────────────
 # chezmoi apply sees bootstrap (already in state DB → skip) and
 # install-packages (new → runs): installs fish, bat, jj, and all other tools.
-# Invalidated by: install-packages script or .chezmoidata.toml changes.
+# Invalidated by: install-packages script or .chezmoidata/ changes.
 
 FROM package-managers-base AS packages
 # Re-COPY forces cache invalidation when package list changes independently of bootstrap
-COPY --chown=testuser:testuser home/.chezmoidata.toml \
-    /home/testuser/.local/share/chezmoi/home/.chezmoidata.toml
+COPY --chown=testuser:testuser home/.chezmoidata \
+    /home/testuser/.local/share/chezmoi/home/.chezmoidata
 COPY --chown=testuser:testuser \
     home/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl \
     /home/testuser/.local/share/chezmoi/home/.chezmoiscripts/
