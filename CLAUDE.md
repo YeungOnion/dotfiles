@@ -37,17 +37,23 @@ universal vars) — an mtime-only change, not a test side effect.
   diff for an unignored file otherwise blocks in the pager.
 - fisher records each plugin's installed files in universal `_fisher_<plugin>_files`
   (paths start with a literal `~`). fish has no wildcard variable expansion, so
-  enumerate with `set -n | string match '_fisher_*_files'` and `$$var`.
+  enumerate with `set -Un | string match '_fisher_*_files'` and `$$var`.
 
 ## fisher is orchestrated by chezmoi
 
-- Plugin list: `fish_plugins` in `home/.chezmoidata/fish.json`. `~/.config/fish/fish_plugins` is
-  rendered from it; add plugins there, not with `fisher install` (the nudge hook says so).
-- `run_onchange_after_06-fish-plugins` runs `fisher update` after deploy. `fisher update`
-  writes the file back in file order, so data spelling must match fisher's canonical form.
+- Plugin list: `fish_plugins` in `home/.chezmoidata/fish.json`. `~/.config/fish/fish_plugins`
+  is rendered from it. Change it with `mise run fish-plugin add|remove owner/repo`, not
+  `fisher install` (the nudge prints the task usage).
+- `run_onchange_after_06-fish-plugins` runs `fisher update` after deploy, then fails if
+  any listed plugin is missing (`fisher update` exits 0 when one download fails).
+  fisher compares names lowercased, so case is harmless; the entry's shape matters — a
+  trailing slash or whitespace names a different plugin. Tests and `fish-plugin` enforce
+  `owner/repo`.
 - `.chezmoiignore` is a template: fisher-owned paths come from `_fisher_*_files` via
   `output "fish" "-c" ...`. `fish --no-config` does not load universal variables, so the
-  template must use plain `fish -c`.
+  template must use plain `fish -c`. Its output is filtered to lines starting with
+  `.config/fish/`. If fish is on PATH but cannot start, `output` errors and every chezmoi
+  command fails until fish is fixed.
 - `.chezmoiremove` errors with `inconsistent state` while the source file still exists:
   delete the source file in the same change.
 - Retiring a conf.d hook deletes the file but not functions already loaded in open
@@ -61,3 +67,29 @@ universal vars) — an mtime-only change, not a test side effect.
 
 Contains only `[data]\n  java_home = ""` — just enough to satisfy `promptStringOnce`
 without interactive prompts. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/` (source tree).
+
+## Data tasks (mise-tasks/)
+
+Hand-made changes that belong in chezmoi data go through repo-scoped mise tasks, so they
+are repeatable: `fish-plugin add|remove`, `pkg add|remove <manager> <name>`,
+`fish-var set|unset`. Run them from anywhere with `mise -C ~/.local/share/chezmoi run …`;
+`--help` shows usage. Each edits JSON through `scripts/data-edit` (the only JSON mutator),
+prints the diff, then applies (named targets or `--include=scripts`, never a bare apply).
+`pkg remove` uninstalls with the package manager because script 02 only installs.
+The `chezmoi_nudge` hook prints the matching task's usage after `brew|cargo|uv tool|fisher`
+installs and removals, and `set -U`. It recognises only the kind of command and never
+parses installer arguments.
+
+Testing tasks:
+- Point tasks at a temp copy with `DOTFILES_DATA_DIR` and skip applying with
+  `DOTFILES_NO_APPLY=1`.
+- mise prepends its own tool directories (chezmoi is a mise tool here) to PATH inside
+  tasks, so a PATH stub never shadows chezmoi. Tasks read the command from
+  `DOTFILES_CHEZMOI` (default `chezmoi`); inject a stub there.
+
+## fish/fishtape gotchas
+
+- `$a:$PATH` expands once per PATH element (PATH is a list). Build PATH values with
+  `(string join : $a $PATH)`.
+- fishtape drops a `@test` whose `"$(…)"` hits an unknown command: it prints neither
+  `ok` nor `not ok`. Watch pass totals when a test's subject does not exist yet.

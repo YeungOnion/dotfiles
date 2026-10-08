@@ -12,8 +12,9 @@ fish_bin={{ or (lookPath "fish") "/home/linuxbrew/.linuxbrew/bin/fish" }}
 
 "$fish_bin" <<'FISH'
 if not functions -q fisher
-    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-    or exit 1
+    # `| source` returns source's status (0 on empty input), so check the result
+    curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+    functions -q fisher; or exit 1
 end
 fisher update
 # fisher update exits 0 when a single download fails; confirm every listed plugin landed

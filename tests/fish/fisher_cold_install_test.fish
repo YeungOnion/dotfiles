@@ -25,7 +25,7 @@ end
 # `chezmoi ignored` is not usable here: it lists nothing for target-only files.
 # fish has no wildcard variable expansion: enumerate fisher's per-plugin file lists
 set -l fisher_files
-for var in (set -n | string match '_fisher_*_files')
+for var in (set -Un | string match '_fisher_*_files')
     set -a fisher_files (string replace -r '^~' $HOME $$var)
 end
 set -l ignored (chezmoi add --dry-run --verbose --no-pager $fisher_files </dev/null 2>&1 \

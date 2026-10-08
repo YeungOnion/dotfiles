@@ -55,8 +55,12 @@ set -l _data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}
 @test "fish-plugins script succeeds when every listed plugin is installed" \
     (fish --no-config -c "function fisher; end; set -g _fisher_plugins \$argv; $_plugins_fish" $_data_plugins >/dev/null 2>&1; echo $status) = 0
 
+@test "fish-plugins bootstrap fails fast when curl fails" \
+    (string match -q '*curl -fsSL*' < $_plugins_script; and string match -q '*functions -q fisher; or exit 1*' < $_plugins_script; and echo yes; or echo no) = yes
+
+set -l _install_script $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl
 @test "install-packages script no longer touches fisher" \
-    (string match -q '*fisher*' < $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl; and echo yes; or echo no) = no
+    (test -f $_install_script; and not string match -q '*fisher*' < $_install_script; and echo clean; or echo dirty) = clean
 
 # ── ignore rendered from fisher state ─────────────────────────────────────────
 
@@ -69,7 +73,7 @@ set -l rendered (chezmoi execute-template < $_ignore_tmpl 2>/dev/null)
     (test -e ~/.config/fish/conf.d/fisher_chezmoi_sync.fish && echo yes || echo no) = no
 
 @test "ignore template has no fisher:begin marker" \
-    (string match -q '*fisher:begin*' < $_ignore_tmpl; and echo yes; or echo no) = no
+    (test -f $_ignore_tmpl; and not string match -q '*fisher:begin*' < $_ignore_tmpl; and echo clean; or echo dirty) = clean
 
 @test "rendered ignore lists a fisher-owned file" \
     (contains -- .config/fish/functions/__z.fish $rendered && echo yes || echo no) = yes
@@ -85,7 +89,15 @@ set -l rendered (chezmoi execute-template < $_ignore_tmpl 2>/dev/null)
 
 # Fresh machine: fish not on PATH yet → only static lines, no error
 set -l _chezmoi_bin (command -v chezmoi)
-set -l no_fish (env PATH=/usr/bin:/bin $_chezmoi_bin execute-template < $_ignore_tmpl 2>&1; echo "status=$status")
+# PATH minus every directory holding a fish executable, wherever fish lives
+set -l _no_fish_path
+for dir in $PATH
+    test -x $dir/fish; or set -a _no_fish_path $dir
+end
+set -l no_fish (env PATH=(string join : $_no_fish_path) $_chezmoi_bin execute-template < $_ignore_tmpl 2>&1; echo "status=$status")
+
+@test "filtered PATH really has no fish" \
+    (env PATH=(string join : $_no_fish_path) sh -c 'command -v fish' >/dev/null; and echo found; or echo none) = none
 
 @test "renders without fish on PATH" \
     $no_fish[-1] = status=0
@@ -103,3 +115,13 @@ trash $_empty_xdg
 
 @test "with empty universal scope no fisher entries render" \
     (contains -- .config/fish/functions/__z.fish $no_fisher && echo yes || echo no) = no
+
+# Stray stdout from fish config must not become an ignore pattern
+set -l _stray_xdg (mktemp -d)
+mkdir -p $_stray_xdg/fish/conf.d
+echo "echo '*'" > $_stray_xdg/fish/conf.d/stray.fish
+set -l with_stray (env XDG_CONFIG_HOME=$_stray_xdg $_chezmoi_bin --config ~/.config/chezmoi/chezmoi.toml execute-template < $_ignore_tmpl 2>/dev/null)
+trash $_stray_xdg
+
+@test "stray fish stdout is not an ignore pattern" \
+    (contains -- '*' $with_stray && echo leaked || echo filtered) = filtered
