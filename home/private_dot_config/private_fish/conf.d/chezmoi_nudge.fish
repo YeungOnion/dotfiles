@@ -32,6 +32,9 @@ function __chezmoi_nudge_task --description 'Usage of the mise task that records
         echo 'pkg add|remove <manager> <name>'
     else if string match -rq '^fisher\s+(install|remove|uninstall)\b' -- $cmd
         echo 'fish-plugin add|remove <owner/repo>'
+    else if string match -rq '^set\s+(-[a-zA-Z]*U[a-zA-Z]*|--universal)\s' -- $cmd
+        # set -U / -Ux / -eU / --universal: any universal change
+        echo 'fish-var set|unset <name> [value]'
     else
         return 1
     end

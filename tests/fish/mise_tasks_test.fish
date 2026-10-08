@@ -70,6 +70,24 @@ set -l d (_task_env)
 @test "data unchanged after unknown manager" \
     (cmp -s $d/packages.json $_repo_root/home/.chezmoidata/packages.json && echo same || echo changed) = same
 
+@echo "fish-var"
+
+set -l d (_task_env)
+@test "fish-var set records the variable" \
+    (_run $d fish-var set FOO_THEME dark >/dev/null 2>&1; jq -r '.fish_universal.FOO_THEME' $d/fish.json) = dark
+
+set -l d (_task_env)
+@test "fish-var unset removes the variable" \
+    (_run $d fish-var unset EDITOR >/dev/null 2>&1; jq -r '.fish_universal | has("EDITOR")' $d/fish.json) = false
+
+set -l d (_task_env)
+@test "fish-var rejects an invalid name" \
+    (_run $d fish-var set 1BAD x >/dev/null 2>&1; echo $status) = 1
+
+set -l d (_task_env)
+@test "fish-var set without a value fails" \
+    (_run $d fish-var set FOO >/dev/null 2>&1; echo $status) = 1
+
 @echo "real data untouched"
 
 @test "repo data has no new changes" \

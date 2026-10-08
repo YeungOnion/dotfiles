@@ -93,3 +93,24 @@ set -g _plugin_usage 'fish-plugin add|remove <owner/repo>'
 
 @test "fisher list suggests nothing" \
     (count (__chezmoi_nudge_task 'fisher list')) = 0
+
+# ── Branch 4: universal variables ─────────────────────────────────────────────
+
+@echo "Branch 4: set -U suggests the fish-var task"
+
+set -g _var_usage 'fish-var set|unset <name> [value]'
+
+@test "set -U suggests fish-var usage" \
+    "$(__chezmoi_nudge_task 'set -U FOO bar')" = $_var_usage
+
+@test "set -Ux suggests fish-var usage" \
+    "$(__chezmoi_nudge_task 'set -Ux FOO bar')" = $_var_usage
+
+@test "set --universal suggests fish-var usage" \
+    "$(__chezmoi_nudge_task 'set --universal FOO bar')" = $_var_usage
+
+@test "set -eU suggests fish-var usage" \
+    "$(__chezmoi_nudge_task 'set -eU FOO')" = $_var_usage
+
+@test "set -g suggests nothing" \
+    (count (__chezmoi_nudge_task 'set -g FOO bar')) = 0
