@@ -114,3 +114,15 @@ set -g _var_usage 'fish-var set|unset <name> [value]'
 
 @test "set -g suggests nothing" \
     (count (__chezmoi_nudge_task 'set -g FOO bar')) = 0
+
+@test "set -Un (list universals) suggests nothing" \
+    (count (__chezmoi_nudge_task "set -Un | string match '_fisher_*_files'")) = 0
+
+@test "set -qU (query) suggests nothing" \
+    (count (__chezmoi_nudge_task 'set -qU FOO')) = 0
+
+@test "set -SU (show) suggests nothing" \
+    (count (__chezmoi_nudge_task 'set -SU FOO')) = 0
+
+@test "set -U without a value (list) suggests nothing" \
+    (count (__chezmoi_nudge_task 'set -U')) = 0
