@@ -1,0 +1,60 @@
+#!/usr/bin/env fish
+# Single mutator for chezmoi JSON data (home/.chezmoidata/*.json).
+# usage: data-edit <file> list-add|list-remove <key> <value>
+#        data-edit <file> map-set <key> <name> <value>
+#        data-edit <file> map-unset <key> <name>
+# Writes via a temp file in the same directory, then mv. Prints nothing on stdout.
+
+if test (count $argv) -lt 3
+    echo "usage: data-edit <file> list-add|list-remove|map-set|map-unset <key> ..." >&2
+    exit 2
+end
+
+set -l file $argv[1]
+set -l op $argv[2]
+set -l key $argv[3]
+set -l rest $argv[4..-1]
+
+jq -e --arg k $key 'has($k)' $file >/dev/null 2>&1
+or begin
+    echo "data-edit: key '$key' not in $file" >&2
+    exit 1
+end
+
+set -l filter
+set -l jqargs --arg k $key
+switch $op
+    case list-add
+        test (count $rest) -eq 1; or begin; echo "data-edit: list-add takes one value" >&2; exit 1; end
+        if jq -e --arg k $key --arg v $rest[1] '.[$k] | index($v) != null' $file >/dev/null
+            echo "already listed: $rest[1]" >&2
+            exit 0
+        end
+        set filter '.[$k] += [$v]'
+        set -a jqargs --arg v $rest[1]
+    case list-remove
+        test (count $rest) -eq 1; or begin; echo "data-edit: list-remove takes one value" >&2; exit 1; end
+        jq -e --arg k $key --arg v $rest[1] '.[$k] | index($v) != null' $file >/dev/null
+        or begin; echo "data-edit: '$rest[1]' not in $key" >&2; exit 1; end
+        set filter '.[$k] -= [$v]'
+        set -a jqargs --arg v $rest[1]
+    case map-set
+        test (count $rest) -eq 2; or begin; echo "data-edit: map-set takes a name and a value" >&2; exit 1; end
+        set filter '.[$k][$n] = $v'
+        set -a jqargs --arg n $rest[1] --arg v $rest[2]
+    case map-unset
+        test (count $rest) -eq 1; or begin; echo "data-edit: map-unset takes one name" >&2; exit 1; end
+        jq -e --arg k $key --arg n $rest[1] '.[$k] | has($n)' $file >/dev/null
+        or begin; echo "data-edit: '$rest[1]' not in $key" >&2; exit 1; end
+        set filter 'del(.[$k][$n])'
+        set -a jqargs --arg n $rest[1]
+    case '*'
+        echo "data-edit: unknown operation '$op'" >&2
+        exit 1
+end
+
+set -l tmp (mktemp -p (path dirname $file) .data-edit.XXXXXX)
+or exit 1
+jq $jqargs $filter $file > $tmp
+or begin; command rm -f $tmp; exit 1; end
+mv $tmp $file
