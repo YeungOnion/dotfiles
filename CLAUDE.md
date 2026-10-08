@@ -86,6 +86,13 @@ Testing tasks:
 - mise prepends its own tool directories (chezmoi is a mise tool here) to PATH inside
   tasks, so a PATH stub never shadows chezmoi. Tasks read the command from
   `DOTFILES_CHEZMOI` (default `chezmoi`); inject a stub there.
+- fish loads `config.fish` and `conf.d/` even non-interactively, and that config puts
+  linuxbrew first on PATH, so a PATH stub for `brew` lost to the real one (a test ran a
+  real `brew uninstall bat`; brew refused only because of a dependent). Tasks and
+  `scripts/data-edit` therefore use `#!/usr/bin/env -S fish --no-config`, and any test
+  that can reach a real package manager first asserts the stub resolves inside
+  `mise exec -- fish --no-config` and skips otherwise. Do not use `--no-config` where
+  universal variables are needed (it hides them): `fish-var` erases via plain `fish -c`.
 
 ## fish/fishtape gotchas
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env -S fish --no-config
 #MISE description="Set or unset a fish universal variable in chezmoi data, then apply"
 #USAGE arg "<action>" help="set or unset"
 #USAGE arg "<name>" help="variable name"
@@ -38,7 +38,8 @@ git -C $repo diff --stat -- home/.chezmoidata
 set -q DOTFILES_NO_APPLY; and exit 0
 if test $usage_action = unset
     # script 04 only sets; erase the live universal explicitly
-    fish -c "set -eU $name"
+    # absent already (e.g. erased by hand before following the nudge) is fine
+    fish -c "if set -qU $name; set -eU $name; end"
     or exit $status
 end
 # script 04 re-runs because the rendered variable set changed

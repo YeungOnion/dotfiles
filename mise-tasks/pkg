@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env -S fish --no-config
 #MISE description="Add or remove a package in chezmoi data, then install or uninstall it"
 #USAGE arg "<action>" help="add or remove"
 #USAGE arg "<manager>" help="brew, brew-linux, brew-darwin, cargo-plugin, cargo-bin or uv"
@@ -10,6 +10,19 @@ set -q DOTFILES_DATA_DIR; or set -l DOTFILES_DATA_DIR $repo/home/.chezmoidata
 set -q DOTFILES_CHEZMOI; or set -l DOTFILES_CHEZMOI chezmoi
 set -l action $usage_action
 set -l name $usage_name
+
+function _pkg_installed --argument-names manager name
+    switch $manager
+        case brew brew-linux brew-darwin
+            brew list --versions $name >/dev/null 2>&1
+        case cargo-plugin
+            cargo install --list 2>/dev/null | string match -qr -- '^'(string escape --style=regex cargo-$name)' v'
+        case cargo-bin
+            cargo install --list 2>/dev/null | string match -qr -- '^'(string escape --style=regex $name)' v'
+        case uv
+            uv tool list 2>/dev/null | string match -qr -- '^'(string escape --style=regex $name)' v'
+    end
+end
 
 switch $usage_manager
     case brew
@@ -55,6 +68,11 @@ if test $action = add
     # script 02 re-runs because the rendered package list changed
     $DOTFILES_CHEZMOI apply --include=scripts
 else
-    # 02 only installs; removing from data does not uninstall
-    $uninstall
+    # 02 only installs; removing from data does not uninstall. Skip when already gone
+    # (the nudge suggests this task right after a manual `brew uninstall`).
+    if _pkg_installed $usage_manager $name
+        $uninstall
+    else
+        echo "pkg: $name is not installed; data updated, nothing to uninstall" >&2
+    end
 end

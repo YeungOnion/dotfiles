@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env -S fish --no-config
 # Single mutator for chezmoi JSON data (home/.chezmoidata/*.json).
 # usage: data-edit <file> list-add|list-remove <key> <value>
 #        data-edit <file> map-set <key> <name> <value>

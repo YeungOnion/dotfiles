@@ -1,4 +1,4 @@
-#!/usr/bin/env fish
+#!/usr/bin/env -S fish --no-config
 #MISE description="Add or remove a fisher plugin in chezmoi data, then install via chezmoi"
 #USAGE arg "<action>" help="add or remove"
 #USAGE arg "<plugin>" help="owner/repo, e.g. jorgebucaran/fishtape"
