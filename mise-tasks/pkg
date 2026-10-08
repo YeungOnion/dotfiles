@@ -1,0 +1,60 @@
+#!/usr/bin/env fish
+#MISE description="Add or remove a package in chezmoi data, then install or uninstall it"
+#USAGE arg "<action>" help="add or remove"
+#USAGE arg "<manager>" help="brew, brew-linux, brew-darwin, cargo-plugin, cargo-bin or uv"
+#USAGE arg "<name>" help="package name; cargo-plugin accepts cargo-x or x"
+
+set -l repo (path resolve (status dirname)/..)
+set -q DOTFILES_DATA_DIR; or set -l DOTFILES_DATA_DIR $repo/home/.chezmoidata
+# mise puts its own tool dirs (including chezmoi) first on PATH; tests inject a stub here
+set -q DOTFILES_CHEZMOI; or set -l DOTFILES_CHEZMOI chezmoi
+set -l action $usage_action
+set -l name $usage_name
+
+switch $usage_manager
+    case brew
+        set -f key brew_packages
+        set -f uninstall brew uninstall $name
+    case brew-linux
+        set -f key brew_packages_linux
+        set -f uninstall brew uninstall $name
+    case brew-darwin
+        set -f key brew_packages_darwin
+        set -f uninstall brew uninstall $name
+    case cargo-plugin
+        set name (string replace -r '^cargo-' '' -- $name)
+        set -f key cargo_plugins
+        set -f uninstall cargo uninstall cargo-$name
+    case cargo-bin
+        set -f key cargo_binaries
+        set -f uninstall cargo uninstall $name
+    case uv
+        set -f key uv_packages
+        set -f uninstall uv tool uninstall $name
+    case '*'
+        echo "pkg: unknown manager '$usage_manager' (brew, brew-linux, brew-darwin, cargo-plugin, cargo-bin, uv)" >&2
+        exit 1
+end
+
+switch $action
+    case add
+        $repo/scripts/data-edit $DOTFILES_DATA_DIR/packages.json list-add $key $name
+        or exit $status
+    case remove
+        $repo/scripts/data-edit $DOTFILES_DATA_DIR/packages.json list-remove $key $name
+        or exit $status
+    case '*'
+        echo "pkg: action must be add or remove, got '$action'" >&2
+        exit 1
+end
+
+git -C $repo diff --stat -- home/.chezmoidata
+
+set -q DOTFILES_NO_APPLY; and exit 0
+if test $action = add
+    # script 02 re-runs because the rendered package list changed
+    $DOTFILES_CHEZMOI apply --include=scripts
+else
+    # 02 only installs; removing from data does not uninstall
+    $uninstall
+end

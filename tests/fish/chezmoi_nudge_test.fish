@@ -12,20 +12,31 @@ set -l _source_err (source $_repo_root/home/private_dot_config/private_fish/conf
 
 @echo "Branch 1: install nudge triggers on known package managers"
 
-@test "brew install triggers nudge" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "brew install bat" 2>&1) && echo yes || echo no) = yes
+set -g _pkg_usage 'pkg add|remove <manager> <name>'
 
-@test "brew install with flags triggers nudge" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "brew install --cask bat" 2>&1) && echo yes || echo no) = yes
+@test "brew install suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'brew install bat')" = $_pkg_usage
 
-@test "cargo install triggers nudge" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "cargo install delta" 2>&1) && echo yes || echo no) = yes
+@test "brew install with flags suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'brew install --cask bat')" = $_pkg_usage
 
-@test "cargo binstall triggers nudge" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "cargo binstall delta" 2>&1) && echo yes || echo no) = yes
+@test "cargo install suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'cargo install delta')" = $_pkg_usage
 
-@test "uv tool install triggers nudge" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "uv tool install ruff" 2>&1) && echo yes || echo no) = yes
+@test "cargo binstall suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'cargo binstall delta')" = $_pkg_usage
+
+@test "uv tool install suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'uv tool install ruff')" = $_pkg_usage
+
+@test "command prefix and leading spaces still match" \
+    "$(__chezmoi_nudge_task '  command brew install bat')" = $_pkg_usage
+
+@test "cargo remove (a Cargo.toml dependency) suggests nothing" \
+    (count (__chezmoi_nudge_task 'cargo remove serde')) = 0
+
+@test "nudge prints the runnable mise usage" \
+    (string match -q 'chezmoi?: mise -C * run pkg add|remove <manager> <name>' (__chezmoi_nudge "brew install bat" 2>&1) && echo yes || echo no) = yes
 
 # ── Branch 1: maintenance commands do not trigger ─────────────────────────────
 
@@ -34,8 +45,8 @@ set -l _source_err (source $_repo_root/home/private_dot_config/private_fish/conf
 @test "brew upgrade does not trigger" \
     (string match -q 'chezmoi?:*' (__chezmoi_nudge "brew upgrade bat" 2>&1) && echo yes || echo no) = no
 
-@test "brew uninstall does not trigger" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "brew uninstall bat" 2>&1) && echo yes || echo no) = no
+@test "brew uninstall suggests pkg usage" \
+    "$(__chezmoi_nudge_task 'brew uninstall bat')" = $_pkg_usage
 
 @test "cargo update does not trigger" \
     (string match -q 'chezmoi?:*' (__chezmoi_nudge "cargo update" 2>&1) && echo yes || echo no) = no
@@ -62,18 +73,23 @@ set -l _source_err (source $_repo_root/home/private_dot_config/private_fish/conf
 @test "non-editor command with chezmoiscripts in path produces no apply reminder" \
     (string match -q '*chezmoi apply*' (__chezmoi_nudge "cat .chezmoiscripts/run_onchange_install-brew.sh.tmpl" 2>&1) && echo yes || echo no) = no
 
-# ── Branch 3: fish plugins live in chezmoi data ───────────────────────────────
+# ── Branch 3: fish plugins ────────────────────────────────────────────────────
 
-@echo "Branch 3: fisher install/remove nudges toward .chezmoidata.toml"
+@echo "Branch 3: fisher install/remove suggests the fish-plugin task"
 
-@test "fisher install triggers data nudge" \
-    (string match -q '*.chezmoidata.toml*' (__chezmoi_nudge "fisher install foo/bar" 2>&1) && echo yes || echo no) = yes
+set -g _plugin_usage 'fish-plugin add|remove <owner/repo>'
 
-@test "fisher remove triggers data nudge" \
-    (string match -q '*.chezmoidata.toml*' (__chezmoi_nudge "fisher remove foo/bar" 2>&1) && echo yes || echo no) = yes
+@test "fisher install suggests fish-plugin usage" \
+    "$(__chezmoi_nudge_task 'fisher install foo/bar')" = $_plugin_usage
 
-@test "fisher update does not trigger" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "fisher update" 2>&1) && echo yes || echo no) = no
+@test "fisher remove suggests fish-plugin usage" \
+    "$(__chezmoi_nudge_task 'fisher remove foo/bar')" = $_plugin_usage
 
-@test "fisher list does not trigger" \
-    (string match -q 'chezmoi?:*' (__chezmoi_nudge "fisher list" 2>&1) && echo yes || echo no) = no
+@test "fisher uninstall suggests fish-plugin usage" \
+    "$(__chezmoi_nudge_task 'fisher uninstall foo/bar')" = $_plugin_usage
+
+@test "fisher update suggests nothing" \
+    (count (__chezmoi_nudge_task 'fisher update')) = 0
+
+@test "fisher list suggests nothing" \
+    (count (__chezmoi_nudge_task 'fisher list')) = 0

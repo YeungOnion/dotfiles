@@ -50,6 +50,26 @@ printf '#!/bin/sh\necho "stub-chezmoi $*" >> "$(dirname "$0")/calls"\nexit 7\n' 
     (string match -q 'stub-chezmoi apply *' < $stub/calls 2>/dev/null; and echo yes; or echo no) = yes
 trash $stub
 
+@echo "pkg"
+
+set -l d (_task_env)
+@test "pkg add brew records the package" \
+    (_run $d pkg add brew cowsay >/dev/null 2>&1; jq -r '.brew_packages[-1]' $d/packages.json) = cowsay
+
+set -l d (_task_env)
+@test "pkg add cargo-plugin strips a cargo- prefix" \
+    (_run $d pkg add cargo-plugin cargo-audit >/dev/null 2>&1; jq -r '.cargo_plugins[-1]' $d/packages.json) = audit
+
+set -l d (_task_env)
+@test "pkg remove uv drops the package" \
+    (_run $d pkg remove uv jrnl >/dev/null 2>&1; jq -r '.uv_packages | index("jrnl")' $d/packages.json) = null
+
+set -l d (_task_env)
+@test "unknown manager fails" \
+    (_run $d pkg add brw cowsay >/dev/null 2>&1; echo $status) = 1
+@test "data unchanged after unknown manager" \
+    (cmp -s $d/packages.json $_repo_root/home/.chezmoidata/packages.json && echo same || echo changed) = same
+
 @echo "real data untouched"
 
 @test "repo data has no new changes" \

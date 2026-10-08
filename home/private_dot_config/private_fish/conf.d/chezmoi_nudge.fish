@@ -7,12 +7,10 @@ function __chezmoi_nudge --on-event fish_postexec
         command -q chezmoi && set -g __chezmoi_src (chezmoi source-path)
     end
 
-    # Branch 1: install nudge — lexical match only, no subprocesses
-    if string match -rq '\b(install|binstall)\b' -- $cmd
-        and string match -rq '^(brew|cargo)\s|^uv\s+tool\s' -- $cmd
-        if test -n "$__chezmoi_src"
-            echo "chezmoi?: hx $__chezmoi_src/.chezmoiscripts/" >&2
-        end
+    # Branches 1/3/4: hand-made changes that belong in chezmoi data → usage of the task that records them
+    if test -n "$__chezmoi_src"
+        set -l usage (__chezmoi_nudge_task $cmd)
+        and echo "chezmoi?: mise -C "(path dirname $__chezmoi_src)" run $usage" >&2
     end
 
     # Branch 2: apply reminder — fires only when editor opened a chezmoiscript
@@ -23,12 +21,18 @@ function __chezmoi_nudge --on-event fish_postexec
         end
     end
 
-    # Branch 3: plugin nudge — the plugin list lives in .chezmoidata.toml
-    if string match -rq '^fisher\s+(install|remove)\b' -- $cmd
-        if test -n "$__chezmoi_src"
-            echo "chezmoi?: hx $__chezmoi_src/.chezmoidata.toml (fish_plugins)" >&2
-        end
-    end
-
     return $prev_status
+end
+
+function __chezmoi_nudge_task --description 'Usage of the mise task that records a hand-made change in chezmoi data'
+    # Lexical only, no subprocesses: recognise the kind of command, not its arguments.
+    # Returns 1 (prints nothing) when no task applies.
+    set -l cmd (string replace -r '^\s*(command\s+)?' '' -- $argv[1])
+    if string match -rq '^brew\s+(install|uninstall|remove)\b|^cargo\s+(install|binstall|uninstall)\b|^uv\s+tool\s+(install|uninstall)\b' -- $cmd
+        echo 'pkg add|remove <manager> <name>'
+    else if string match -rq '^fisher\s+(install|remove|uninstall)\b' -- $cmd
+        echo 'fish-plugin add|remove <owner/repo>'
+    else
+        return 1
+    end
 end
