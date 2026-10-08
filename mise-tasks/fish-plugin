@@ -1,0 +1,39 @@
+#!/usr/bin/env fish
+#MISE description="Add or remove a fisher plugin in chezmoi data, then install via chezmoi"
+#USAGE arg "<action>" help="add or remove"
+#USAGE arg "<plugin>" help="owner/repo, e.g. jorgebucaran/fishtape"
+
+set -l repo (path resolve (status dirname)/..)
+set -q DOTFILES_DATA_DIR; or set -l DOTFILES_DATA_DIR $repo/home/.chezmoidata
+# mise puts its own tool dirs (including chezmoi) first on PATH; tests inject a stub here
+set -q DOTFILES_CHEZMOI; or set -l DOTFILES_CHEZMOI chezmoi
+set -l action $usage_action
+set -l plugin $usage_plugin
+
+# fisher parses fish_plugins with ^[^\s]+$ and compares lowercased: a trailing
+# slash or whitespace names a different plugin
+string match -qr '^[^/\s]+/[^/\s]+(@\S+)?$' -- $plugin
+or begin
+    echo "fish-plugin: '$plugin' is not owner/repo" >&2
+    exit 1
+end
+
+switch $action
+    case add
+        $repo/scripts/data-edit $DOTFILES_DATA_DIR/fish.json list-add fish_plugins $plugin
+        or exit $status
+    case remove
+        $repo/scripts/data-edit $DOTFILES_DATA_DIR/fish.json list-remove fish_plugins $plugin
+        or exit $status
+    case '*'
+        echo "fish-plugin: action must be add or remove, got '$action'" >&2
+        exit 1
+end
+
+git -C $repo diff --stat -- home/.chezmoidata
+
+set -q DOTFILES_NO_APPLY; and exit 0
+# fish_plugins first, then script 06 (fisher update) re-runs because its content changed
+$DOTFILES_CHEZMOI apply ~/.config/fish/fish_plugins
+or exit $status
+$DOTFILES_CHEZMOI apply --include=scripts
