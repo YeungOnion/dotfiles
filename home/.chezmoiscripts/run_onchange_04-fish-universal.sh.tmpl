@@ -12,9 +12,11 @@ set -eufo pipefail
 # universal config: {{ $vars | toJson }}
 
 if command -v fish &>/dev/null; then
-    fish -c '
+    # Quoted heredoc: bash passes it through untouched. Each value is a fish
+    # single-quoted string, where only \ and ' are special, so values stay verbatim.
+    fish <<'FISH'
 {{- range $k, $v := $vars }}
-set -Ux {{ $k }} {{ $v }}
+set -Ux {{ $k }} '{{ toString $v | replace "\\" "\\\\" | replace "'" "\\'" }}'
 {{- end }}
-'
+FISH
 fi
