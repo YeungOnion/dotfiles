@@ -76,7 +76,7 @@ set -l rendered (chezmoi execute-template < $_ignore_tmpl 2>/dev/null)
     (test -f $_ignore_tmpl; and not string match -q '*fisher:begin*' < $_ignore_tmpl; and echo clean; or echo dirty) = clean
 
 @test "rendered ignore lists a fisher-owned file" \
-    (contains -- .config/fish/functions/__z.fish $rendered && echo yes || echo no) = yes
+    (contains -- .config/fish/functions/fisher.fish $rendered && echo yes || echo no) = yes
 
 @test "rendered ignore lists static non-fisher entries" \
     (contains -- .config/fish/completions/swamp.fish $rendered && echo yes || echo no) = yes
@@ -103,7 +103,7 @@ set -l no_fish (env PATH=(string join : $_no_fish_path) $_chezmoi_bin execute-te
     $no_fish[-1] = status=0
 
 @test "without fish on PATH no fisher entries render" \
-    (contains -- .config/fish/functions/__z.fish $no_fish && echo yes || echo no) = no
+    (contains -- .config/fish/functions/fisher.fish $no_fish && echo yes || echo no) = no
 
 # fish present but fisher never ran → empty universal scope, still no error
 set -l _empty_xdg (mktemp -d)
@@ -114,7 +114,7 @@ trash $_empty_xdg
     $no_fisher[-1] = status=0
 
 @test "with empty universal scope no fisher entries render" \
-    (contains -- .config/fish/functions/__z.fish $no_fisher && echo yes || echo no) = no
+    (contains -- .config/fish/functions/fisher.fish $no_fisher && echo yes || echo no) = no
 
 # Stray stdout from fish config must not become an ignore pattern
 set -l _stray_xdg (mktemp -d)

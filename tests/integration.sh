@@ -112,10 +112,10 @@ fi
 # rendered ignore must cover fisher files and skip user-managed ones
 chezmoi_src=$(chezmoi source-path 2>/dev/null)
 rendered_ignore=$(chezmoi execute-template < "$chezmoi_src/.chezmoiignore" 2>/dev/null)
-if grep -qxF '.config/fish/functions/__z.fish' <<<"$rendered_ignore"; then
-    ok "fisher-owned __z.fish in rendered .chezmoiignore"
+if grep -qxF '.config/fish/functions/fisher.fish' <<<"$rendered_ignore"; then
+    ok "fisher-owned fisher.fish in rendered .chezmoiignore"
 else
-    check_fail "fisher-owned __z.fish missing from rendered .chezmoiignore"
+    check_fail "fisher-owned fisher.fish missing from rendered .chezmoiignore"
 fi
 if grep -qF '__append_pipe_fzf.fish' <<<"$rendered_ignore"; then
     check_fail "__append_pipe_fzf.fish incorrectly in rendered .chezmoiignore"

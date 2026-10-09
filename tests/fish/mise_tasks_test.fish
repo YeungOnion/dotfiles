@@ -25,8 +25,10 @@ set -l d (_task_env)
     (_run $d fish-plugin add foo/bar >/dev/null 2>&1; jq -r '.fish_plugins[-1]' $d/fish.json) = foo/bar
 
 set -l d (_task_env)
+@test "sample plugin is present before removal" \
+    (jq -r '.fish_plugins | index("jorgebucaran/autopair.fish") != null' $d/fish.json) = true
 @test "fish-plugin remove drops the plugin" \
-    (_run $d fish-plugin remove jethrokuan/z >/dev/null 2>&1; jq -r '.fish_plugins | index("jethrokuan/z")' $d/fish.json) = null
+    (_run $d fish-plugin remove jorgebucaran/autopair.fish >/dev/null 2>&1; jq -r '.fish_plugins | index("jorgebucaran/autopair.fish")' $d/fish.json) = null
 
 set -l d (_task_env)
 @test "fish-plugin rejects a trailing slash" \
