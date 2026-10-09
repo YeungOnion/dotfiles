@@ -119,5 +119,34 @@ echo '{not json' > $bad
 @test "invalid JSON input is reported as invalid JSON" \
     (string match -q '*invalid JSON*' ($_edit $bad list-add pkgs a 2>&1); and echo yes; or echo no) = yes
 
+@echo "validation fails closed"
+
+set -l f (_fixture_data)
+set -l before (sha256sum < $f)
+@test "versioned duplicate plugin is rejected" \
+    ($_edit $f list-add fish_plugins patrickf1/fzf.fish@v10 2>/dev/null; echo $status) = 1
+@test "file untouched after versioned duplicate" \
+    (sha256sum < $f) = $before
+
+# a copy of data-edit with no schema module beside it: the check cannot run
+set -g _noschema (mktemp -d)
+cp $_edit $_noschema/data-edit
+set -l f (_fixture_data)
+set -l before (sha256sum < $f)
+@test "missing schema module rejects the edit" \
+    ($_noschema/data-edit $f list-add brew_packages fd 2>/dev/null; echo $status) = 1
+@test "file untouched when the schema cannot run" \
+    (sha256sum < $f) = $before
+
+# a hand edit gave a known key the wrong type
+set -l f (mktemp --suffix .json)
+set -ga _fixtures $f
+echo '{"fish_plugins": "jethrokuan/z", "fish_universal": {"EDITOR": "hx"}}' | jq . > $f
+set -l before (sha256sum < $f)
+@test "wrong-typed fish_plugins is reported, not crashed past" \
+    (string match -q '*fish_plugins*array*' ($_edit $f map-set fish_universal FOO bar 2>&1); and echo yes; or echo no) = yes
+@test "file untouched when a known key has the wrong type" \
+    (sha256sum < $f) = $before
+
 # only the files this test created
-trash $_fixtures
+trash $_fixtures $_noschema

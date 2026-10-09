@@ -66,6 +66,12 @@ or begin; command rm -f $tmp; exit 1; end
 
 # validate the result, not the input: only a fully valid file replaces the data
 set -l violations (jq -r -L $schema_dir 'include "data-schema"; violations[]' $tmp)
+or begin
+    # fail closed: if the check itself cannot run, nothing replaces the data
+    echo "data-edit: schema check failed to run; data left unchanged" >&2
+    command rm -f $tmp
+    exit 1
+end
 if test (count $violations) -gt 0
     printf 'data-edit: %s\n' $violations >&2
     command rm -f $tmp
