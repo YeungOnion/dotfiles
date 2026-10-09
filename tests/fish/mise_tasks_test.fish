@@ -16,7 +16,8 @@ function _run --description 'run a mise task against data dir $argv[1]'
     env DOTFILES_DATA_DIR=$argv[1] DOTFILES_NO_APPLY=1 mise -C $_repo_root run $argv[2..-1]
 end
 
-set -g _real_before (git -C $_repo_root status --porcelain home/.chezmoidata)
+# checksums, not git status: catches a new edit to an already-modified file too
+set -g _real_before (sha256sum $_repo_root/home/.chezmoidata/*.json | string collect)
 
 @echo "fish-plugin"
 
@@ -135,7 +136,7 @@ end
 @echo "real data untouched"
 
 @test "repo data has no new changes" \
-    "$(git -C $_repo_root status --porcelain home/.chezmoidata)" = "$_real_before"
+    "$(sha256sum $_repo_root/home/.chezmoidata/*.json | string collect)" = "$_real_before"
 
 # only the directories this test created
 trash $_task_dirs

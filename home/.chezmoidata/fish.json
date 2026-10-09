@@ -1,7 +1,6 @@
 {
   "fish_plugins": [
     "patrickf1/fzf.fish",
-    "jethrokuan/z",
     "jorgebucaran/autopair.fish",
     "jorgebucaran/getopts.fish",
     "jorgebucaran/hydro",

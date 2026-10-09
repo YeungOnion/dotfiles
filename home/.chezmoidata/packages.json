@@ -23,7 +23,8 @@
     "television",
     "tmuxinator",
     "tree",
-    "youplot"
+    "youplot",
+    "zoxide"
   ],
   "brew_packages_linux": [
     "xclip"
