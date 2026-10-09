@@ -62,6 +62,11 @@ universal vars) — an mtime-only change, not a test side effect.
   and appends a `# fisher:begin` block to `home/.chezmoiignore`. The unit test
   "ignore template has no fisher:begin marker" detects it; undo with
   `git checkout -- home/.chezmoiignore`.
+- Directory jumping is zoxide (`conf.d/zoxide.fish`, `--cmd z`), not jethrokuan/z: z
+  rewrote its data on every `cd` without checking the write. zoxide history is per
+  machine (`~/.local/share/zoxide`); on a new machine with old z data, import it once
+  with `_Z_DATA=~/.local/share/z/data zoxide import z` (0.10 takes no path argument and
+  reads `$_Z_DATA`; `--merge` if zoxide already has history).
 
 ## chezmoi.test.toml
 
@@ -74,7 +79,9 @@ Hand-made changes that belong in chezmoi data go through repo-scoped mise tasks,
 are repeatable: `fish-plugin add|remove`, `pkg add|remove <manager> <name>`,
 `fish-var set|unset`. Run them from anywhere with `mise -C ~/.local/share/chezmoi run …`;
 `--help` shows usage. Each edits JSON through `scripts/data-edit` (the only JSON mutator),
-prints the diff, then applies (named targets or `--include=scripts`, never a bare apply).
+which validates the whole result against `scripts/data-schema.jq` (unique entries, plugin
+`owner/repo` unique ignoring case, safe package names, valid variable names) before
+replacing the file; it then prints the diff, then applies (named targets or `--include=scripts`, never a bare apply).
 `pkg remove` uninstalls with the package manager because script 02 only installs.
 The `chezmoi_nudge` hook prints the matching task's usage after `brew|cargo|uv tool|fisher`
 installs and removals, and `set -U`. It recognises only the kind of command and never
