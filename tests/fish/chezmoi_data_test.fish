@@ -34,3 +34,10 @@ for p in (jq -r '.fish_plugins[]' $_data/fish.json 2>/dev/null)
     @test "$p is owner/repo" \
         (string match -qr '^[^/\s]+/[^/\s]+(@\S+)?$' -- $p && echo yes || echo no) = yes
 end
+
+@echo "live data satisfies the schema"
+
+for f in $_data/*.json
+    @test (path basename $f)" satisfies the schema" \
+        (jq -L $_repo_root/scripts 'include "data-schema"; violations | length' $f) = 0
+end

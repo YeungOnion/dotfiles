@@ -72,5 +72,52 @@ set -l f (_fixture)
 @test "stdout stays empty on success" \
     (count ($_edit (_fixture) list-add pkgs z)) = 0
 
+@echo "result validation"
+
+function _fixture_data
+    set -l f (mktemp --suffix .json)
+    set -ga _fixtures $f
+    echo '{"fish_plugins": ["patrickf1/fzf.fish"], "brew_packages": ["bat"], "fish_universal": {"EDITOR": "hx"}}' | jq . > $f
+    chmod 644 $f
+    echo $f
+end
+
+set -l f (_fixture_data)
+set -l before (sha256sum < $f)
+@test "case-only duplicate plugin is rejected" \
+    ($_edit $f list-add fish_plugins PatrickF1/fzf.fish 2>/dev/null; echo $status) = 1
+@test "rejected edit leaves the file byte-identical" \
+    (sha256sum < $f) = $before
+
+set -l f (_fixture_data)
+@test "plugin without owner/repo shape is rejected" \
+    ($_edit $f list-add fish_plugins fzf.fish 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "package name with whitespace is rejected" \
+    ($_edit $f list-add brew_packages 'two words' 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "package name with ; is rejected" \
+    ($_edit $f list-add brew_packages 'x;rm' 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "invalid variable name is rejected" \
+    ($_edit $f map-set fish_universal 1BAD x 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "rejection names the violation" \
+    (string match -q '*fish_plugins*' ($_edit $f list-add fish_plugins fzf.fish 2>&1); and echo yes; or echo no) = yes
+
+set -l f (_fixture_data)
+@test "valid edit keeps the file mode" \
+    ($_edit $f list-add brew_packages fd; and stat -c %a $f) = 644
+
+set -l bad (mktemp --suffix .json)
+set -ga _fixtures $bad
+echo '{not json' > $bad
+@test "invalid JSON input is reported as invalid JSON" \
+    (string match -q '*invalid JSON*' ($_edit $bad list-add pkgs a 2>&1); and echo yes; or echo no) = yes
+
 # only the files this test created
 trash $_fixtures

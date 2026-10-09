@@ -15,7 +15,12 @@ set -l op $argv[2]
 set -l key $argv[3]
 set -l rest $argv[4..-1]
 
-jq -e --arg k $key 'has($k)' $file >/dev/null 2>&1
+jq -e . $file >/dev/null 2>&1
+or begin
+    echo "data-edit: $file is not readable valid JSON (invalid JSON)" >&2
+    exit 1
+end
+jq -e --arg k $key 'has($k)' $file >/dev/null
 or begin
     echo "data-edit: key '$key' not in $file" >&2
     exit 1
@@ -53,8 +58,19 @@ switch $op
         exit 1
 end
 
+set -l schema_dir (path resolve (status dirname))
 set -l tmp (mktemp -p (path dirname $file) .data-edit.XXXXXX)
 or exit 1
 jq $jqargs $filter $file > $tmp
 or begin; command rm -f $tmp; exit 1; end
+
+# validate the result, not the input: only a fully valid file replaces the data
+set -l violations (jq -r -L $schema_dir 'include "data-schema"; violations[]' $tmp)
+if test (count $violations) -gt 0
+    printf 'data-edit: %s\n' $violations >&2
+    command rm -f $tmp
+    exit 1
+end
+
+chmod (stat -c %a $file) $tmp
 mv $tmp $file
