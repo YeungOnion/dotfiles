@@ -27,7 +27,7 @@ set -l _stderr (fish -c exit 2>&1)
 
 # ── plugin list is chezmoi data ───────────────────────────────────────────────
 
-@echo "fish_plugins: rendered from .chezmoidata.toml"
+@echo "fish_plugins: rendered from .chezmoidata/fish.json"
 
 @test "fish_plugins data renders the deployed plugin list" \
     "$(chezmoi execute-template '{{ range .fish_plugins }}{{ . }}{{ "\n" }}{{ end }}' 2>&1)" = "$(cat ~/.config/fish/fish_plugins)"

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eufo pipefail
 # Runs after files are deployed, so ~/.config/fish/fish_plugins (rendered from
-# .chezmoidata.toml fish_plugins) exists for `fisher update` to read.
+# home/.chezmoidata/fish.json fish_plugins) exists for `fisher update` to read.
 # Re-runs when the list changes: {{ .fish_plugins | join " " }}
 
 {{ if eq .chezmoi.os "darwin" -}}

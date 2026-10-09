@@ -41,3 +41,8 @@ for f in $_data/*.json
     @test (path basename $f)" satisfies the schema" \
         (jq -L $_repo_root/scripts 'include "data-schema"; violations | length' $f) = 0
 end
+
+@echo "no stale TOML data references"
+
+@test "no live file mentions .chezmoidata.toml" \
+    (git -C $_repo_root grep -l '\.chezmoidata\.toml' -- . ':!docs/' ':!tests/fish/chezmoi_data_test.fish' | count) = 0

@@ -12,7 +12,7 @@ test $in_container = yes; or exit 1
 
 # ── plugins installed from data ───────────────────────────────────────────────
 
-@echo "fresh install: fish plugins from .chezmoidata.toml"
+@echo "fresh install: fish plugins from .chezmoidata/fish.json"
 
 set -l data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}{{ "\n" }}{{ end }}')
 
