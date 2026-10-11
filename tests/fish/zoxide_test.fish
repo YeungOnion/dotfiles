@@ -11,8 +11,8 @@ set -g _data $_repo_root/home/.chezmoidata
 @test "jethrokuan/z is no longer a fish plugin" \
     (jq -r '.fish_plugins | index("jethrokuan/z")' $_data/fish.json) = null
 
-@test "zoxide conf.d is managed" \
-    (test -f $_repo_root/home/private_dot_config/private_fish/conf.d/zoxide.fish; and echo yes; or echo no) = yes
+@test "config.fish initializes zoxide" \
+    (string match -q "*zoxide init fish --cmd z*" < $_repo_root/home/private_dot_config/private_fish/executable_config.fish.tmpl; and echo yes; or echo no) = yes
 
 @test "interactive fish defines z from zoxide" \
     (fish -i -c 'functions z' 2>/dev/null | string match -q '*__zoxide_z*'; and echo yes; or echo no) = yes

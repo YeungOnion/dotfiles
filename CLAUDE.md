@@ -62,7 +62,7 @@ universal vars) — an mtime-only change, not a test side effect.
   and appends a `# fisher:begin` block to `home/.chezmoiignore`. The unit test
   "ignore template has no fisher:begin marker" detects it; undo with
   `git checkout -- home/.chezmoiignore`.
-- Directory jumping is zoxide (`conf.d/zoxide.fish`, `--cmd z`), not jethrokuan/z: z
+- Directory jumping is zoxide (initialized in `config.fish`, `--cmd z`), not jethrokuan/z: z
   rewrote its data on every `cd` without checking the write. zoxide history is per
   machine (`~/.local/share/zoxide`); on a new machine with old z data, import it once
   with `_Z_DATA=~/.local/share/z/data zoxide import z` (0.10 takes no path argument and
@@ -71,18 +71,33 @@ universal vars) — an mtime-only change, not a test side effect.
 ## chezmoi.test.toml
 
 Contains only `[data]\n  java_home = ""` — just enough to satisfy `promptStringOnce`
-without interactive prompts. It has no `fish_paths_local`, so the container renders
+without interactive prompts. Package lists, fish plugins and universals come from JSON in
+`home/.chezmoidata/` (source tree). It has no `fish_paths_local`, so the container renders
 only the shared PATH entries.
 
-## fish PATH entries
+## fish startup layout and PATH entries
 
-`config.fish` is a template; its `fish_add_path` line renders two lists:
+Follows fish's documented model: `conf.d/` snippets run first (in name order), then
+`config.fish` runs last as the main file.
+- `config.fish.tmpl` owns setup in line order: environment (`RUSTUP_HOME`, `CARGO_HOME`,
+  `GOPATH`, …) → Homebrew `shellenv` (prefix per OS) → `fish_add_path --global --path` →
+  interactive settings → tool hooks (mise, direnv, zoxide), each `command -q`-guarded and
+  silent when missing.
+- `conf.d/` holds only self-contained snippets (nudge, terminal theme, installer env files,
+  fisher plugins). No numeric-prefix ordering tricks.
+- PATH is declarative: `--global --path` changes the session only, so nothing is saved to
+  universal `fish_user_paths`, and removing an entry from data removes it from PATH. (Plain
+  `fish_add_path` in a config file writes universal state that is never cleaned up.)
+- `tests/fish/startup_test.fish` checks the order and a fresh shell (no `fish_variables`,
+  bare PATH).
+
+The `fish_add_path` line renders two lists:
 - shared: `fish_paths` in `home/.chezmoidata/fish.json` — schema-validated (`/abs`, `~/rel`
   or `$VAR/rel`, plain path characters), rendered unquoted so `~`/`$VAR` expand;
 - machine-only: `fish_paths_local` in the local `~/.config/chezmoi/chezmoi.toml` (never in
   the repo; `.chezmoi.toml.tmpl` carries it across `chezmoi init`), rendered single-quoted.
 When an installer appends `fish_add_path …` to `~/.config/fish/config.fish`, move that path
-into `fish_paths_local` (`chezmoi edit-config`) instead of `chezmoi add`-ing the file. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/` (source tree).
+into `fish_paths_local` (`chezmoi edit-config`) instead of `chezmoi add`-ing the file.
 
 ## Data tasks (mise-tasks/)
 
