@@ -1,4 +1,7 @@
 {{- $javaHome := promptStringOnce . "java_home" "Java home path (leave blank to auto-detect)" -}}
+{{- /* machine-only fish PATH entries; kept across `chezmoi init`, never in the repo */ -}}
+{{- $fishPathsLocal := get . "fish_paths_local" | default list -}}
 
 [data]
   java_home = {{ $javaHome | quote }}
+  fish_paths_local = {{ $fishPathsLocal | toToml }}

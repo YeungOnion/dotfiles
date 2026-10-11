@@ -31,7 +31,13 @@ if status is-interactive
         --exclude="**/.git/{objects,refs,logs}/*" \
         --exclude="**/.pixi/env/*"
     set -gx fzf_git_log_opts --preview-window "down,70%"
-    fish_add_path $RUSTUP_HOME/bin $CARGO_HOME/bin $GOPATH/bin $HOME/.local/bin $HOME/.pixi/bin
+    # shared: chezmoi data fish_paths (schema-validated, unquoted so ~ and $VAR expand)
+    # machine-only: fish_paths_local in ~/.config/chezmoi/chezmoi.toml (quoted verbatim)
+{{- $paths := .fish_paths }}
+{{- range (get . "fish_paths_local" | default list) }}
+{{- $paths = append $paths (printf "'%s'" (toString . | replace "\\" "\\\\" | replace "'" "\\'")) }}
+{{- end }}
+    fish_add_path {{ $paths | join " " }}
     source $__fish_config_dir/aliases.fish
     set -g sponge_purge_only_on_exit true
 

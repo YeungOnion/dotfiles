@@ -148,5 +148,34 @@ set -l before (sha256sum < $f)
 @test "file untouched when a known key has the wrong type" \
     (sha256sum < $f) = $before
 
+@echo "fish_paths"
+
+function _fixture_paths
+    set -l f (mktemp --suffix .json)
+    set -ga _fixtures $f
+    echo '{"fish_paths": ["$CARGO_HOME/bin", "~/.local/bin"]}' | jq . > $f
+    echo $f
+end
+
+set -l f (_fixture_paths)
+@test "absolute path is accepted" \
+    ($_edit $f list-add fish_paths /opt/tool/bin; and jq -r '.fish_paths[-1]' $f) = /opt/tool/bin
+
+set -l f (_fixture_paths)
+@test "\$VAR/sub path is accepted" \
+    ($_edit $f list-add fish_paths '$GOPATH/bin'; and jq -r '.fish_paths[-1]' $f) = '$GOPATH/bin'
+
+for bad in 'relative/bin' '/opt/x;rm' '/opt/$(id)' "/opt/it's" '~user/bin'
+    set -l f (_fixture_paths)
+    @test "fish_paths rejects $bad" \
+        ($_edit $f list-add fish_paths $bad 2>/dev/null; echo $status) = 1
+end
+
+set -l f (mktemp --suffix .json)
+set -ga _fixtures $f
+echo '{"fish_paths": "/opt/x/bin"}' | jq . > $f
+@test "wrong-typed fish_paths is a violation" \
+    (jq -r -L $_repo_root/scripts 'include "data-schema"; violations[]' $f | string match -q '*fish_paths*array*'; and echo yes; or echo no) = yes
+
 # only the files this test created
 trash $_fixtures $_noschema

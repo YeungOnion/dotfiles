@@ -5,7 +5,7 @@
 
 def package_keys: ["brew_packages", "brew_packages_linux", "brew_packages_darwin",
                    "cargo_plugins", "cargo_binaries", "uv_packages"];
-def list_keys: ["fish_plugins"] + package_keys;
+def list_keys: ["fish_plugins", "fish_paths"] + package_keys;
 def map_keys: ["fish_universal"];
 
 def type_violations:
@@ -36,6 +36,15 @@ def package_violations:
     | select(test("^[A-Za-z0-9@][A-Za-z0-9._+@/-]*$") | not)
     | "\($k): \(tojson) is not a valid package name" ];
 
+# fish_paths render unquoted into `fish_add_path` so `~` and `$VAR` expand: allow only
+# an absolute, ~/ or $VAR/ prefix followed by plain path characters.
+def path_violations:
+  if (.fish_paths | type) == "array" then
+    [ .fish_paths[] | strings
+      | select(test("^(/|~/|\\$[A-Za-z_][A-Za-z0-9_]*(/|$))[A-Za-z0-9._+@/-]*$") | not)
+      | "fish_paths: \(tojson) must be /abs, ~/rel or $VAR/rel with plain path characters" ]
+  else [] end;
+
 def map_violations($k):
   [ .[$k] | to_entries[]
     | (select(.key | test("^[A-Za-z_][A-Za-z0-9_]*$") | not)
@@ -51,5 +60,5 @@ def violations:
         | if (.[$k] | type) == "array" then list_violations($k)[]
           elif (.[$k] | type) == "object" then map_violations($k)[]
           else empty end ]
-    + plugin_violations + package_violations
+    + plugin_violations + package_violations + path_violations
   end;

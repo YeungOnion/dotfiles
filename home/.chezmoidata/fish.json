@@ -11,6 +11,13 @@
     "jorgebucaran/fisher",
     "jorgebucaran/fishtape"
   ],
+  "fish_paths": [
+    "$RUSTUP_HOME/bin",
+    "$CARGO_HOME/bin",
+    "$GOPATH/bin",
+    "~/.local/bin",
+    "~/.pixi/bin"
+  ],
   "fish_universal": {
     "BAT_THEME_DARK": "Dracula",
     "BAT_THEME_LIGHT": "OneHalfLight",

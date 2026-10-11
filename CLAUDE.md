@@ -71,7 +71,18 @@ universal vars) — an mtime-only change, not a test side effect.
 ## chezmoi.test.toml
 
 Contains only `[data]\n  java_home = ""` — just enough to satisfy `promptStringOnce`
-without interactive prompts. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/` (source tree).
+without interactive prompts. It has no `fish_paths_local`, so the container renders
+only the shared PATH entries.
+
+## fish PATH entries
+
+`config.fish` is a template; its `fish_add_path` line renders two lists:
+- shared: `fish_paths` in `home/.chezmoidata/fish.json` — schema-validated (`/abs`, `~/rel`
+  or `$VAR/rel`, plain path characters), rendered unquoted so `~`/`$VAR` expand;
+- machine-only: `fish_paths_local` in the local `~/.config/chezmoi/chezmoi.toml` (never in
+  the repo; `.chezmoi.toml.tmpl` carries it across `chezmoi init`), rendered single-quoted.
+When an installer appends `fish_add_path …` to `~/.config/fish/config.fish`, move that path
+into `fish_paths_local` (`chezmoi edit-config`) instead of `chezmoi add`-ing the file. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/` (source tree).
 
 ## Data tasks (mise-tasks/)
 
