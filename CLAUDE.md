@@ -131,6 +131,13 @@ Testing tasks:
   `mise exec -- fish --no-config` and skips otherwise. Do not use `--no-config` where
   universal variables are needed (it hides them): `fish-var` erases via plain `fish -c`.
 
+## Package names that are not what they seem
+
+- crates.io `vector` is an unrelated library (stainless-steel/vector), not vectordotdev's
+  vector. Before adding a cargo binary, check the crate's repository on crates.io.
+- `vectordotdev/brew` only ships macOS binaries; on Linux its formula is HEAD-only (a full
+  Rust build), and homebrew-core has no `vector`. vector is a manual install per machine.
+
 ## fish/fishtape gotchas
 
 - `$a:$PATH` expands once per PATH element (PATH is a list). Build PATH values with

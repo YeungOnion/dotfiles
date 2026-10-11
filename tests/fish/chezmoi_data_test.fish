@@ -46,3 +46,10 @@ end
 
 @test "no live file mentions .chezmoidata.toml" \
     (git -C $_repo_root grep -l '\.chezmoidata\.toml' -- . ':!docs/' ':!tests/fish/chezmoi_data_test.fish' | count) = 0
+
+@echo "cargo_binaries name the intended crates"
+
+# crates.io "vector" is an unrelated nearest-neighbour library (stainless-steel/vector),
+# not vectordotdev's vector; binstall failing on it was all that kept it off the machine
+@test "cargo_binaries has no vector" \
+    (jq -r '.cargo_binaries | index("vector")' $_data/packages.json) = null

@@ -42,7 +42,6 @@
   ],
   "cargo_binaries": [
     "tauri-cli",
-    "vector",
     "trash-cli-rs"
   ],
   "uv_packages": [
