@@ -11,8 +11,22 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 export PATH="$HOME/.local/bin:$PATH"
 
 # -- Installers ---------------------------------------------------------------
+{{- /* tap formulas install only when chezmoi init stored trust for their tap */}}
+{{- $trust := get . "brew_tap_trust" | default dict }}
+{{- $tapTrusted := list }}
+{{- $tapSkipped := list }}
+{{- range get . "brew_tap_packages" | default list }}
+{{-   if get $trust (regexReplaceAll "/[^/]*$" . "") }}
+{{-     $tapTrusted = append $tapTrusted . }}
+{{-   else }}
+{{-     $tapSkipped = append $tapSkipped . }}
+{{-   end }}
+{{- end }}
 install_brew() {
-    brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }}
+{{- range $tapSkipped }}
+    echo "⏭  skipping {{ . }}: its tap is not trusted (answer the prompt in chezmoi init)"
+{{- end }}
+    brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }}{{ range $tapTrusted }} {{ . }}{{ end }}
 }
 
 install_cargo() {

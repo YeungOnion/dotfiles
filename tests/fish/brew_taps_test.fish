@@ -58,4 +58,41 @@ for t in (jq -r '.brew_tap_packages[] | sub("/[^/]*$"; "")' $_repo_root/home/.ch
         (contains -- $t $answered; and echo yes; or echo no) = yes
 end
 
+@echo "script 02: trusted taps only"
+
+function _render --description 'render script 02 with JSON override data $argv[1]'
+    chezmoi --config $_bare_cfg execute-template --override-data $argv[1] < $_install
+end
+
+function _brew_line
+    _render $argv[1] | string match -r '^\s*brew install .*' | string trim
+end
+
+function _installs --description 'yes if the brew install line has core packages and $argv[2]'
+    set -l line (_brew_line $argv[1])
+    string match -q '* zoxide*' -- $line; or begin; echo no-line; return; end
+    string match -q -- "* $argv[2] *" "$line "; and echo yes; or echo no
+end
+
+@test "trusted tap formula joins brew install" \
+    (_installs '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":true}}' oven-sh/bun/bun) = yes
+
+@test "untrusted tap formula stays out of brew install" \
+    (_installs '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":false}}' oven-sh/bun/bun) = no
+
+@test "unanswered tap counts as untrusted" \
+    (_installs '{"brew_tap_packages":["oven-sh/bun/bun"]}' oven-sh/bun/bun) = no
+
+set -l two '{"brew_tap_packages":["a/t/x","b/u/y"],"brew_tap_trust":{"a/t":true,"b/u":false}}'
+@test "trust is per tap: trusted tap installs" \
+    (_installs $two a/t/x) = yes
+@test "trust is per tap: other tap does not" \
+    (_installs $two b/u/y) = no
+
+@test "untrusted formula is reported as skipped" \
+    (_render '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":false}}' | string match -q '*echo*skipping oven-sh/bun/bun*'; and echo yes; or echo no) = yes
+
+@test "rendered script parses" \
+    (_render $two | bash -n; and echo yes; or echo no) = yes
+
 trash $_tmp
