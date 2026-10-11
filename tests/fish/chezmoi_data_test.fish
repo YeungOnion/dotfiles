@@ -18,7 +18,7 @@ set -g _data $_repo_root/home/.chezmoidata
 
 @echo "data reaches templates"
 
-for key in brew_packages brew_packages_linux brew_packages_darwin cargo_plugins cargo_binaries uv_packages fish_plugins
+for key in brew_packages brew_packages_linux brew_packages_darwin brew_tap_packages cargo_plugins cargo_binaries uv_packages fish_plugins
     @test "$key renders as a list" \
         (chezmoi execute-template "{{ kindOf .$key }}" 2>&1) = slice
 end

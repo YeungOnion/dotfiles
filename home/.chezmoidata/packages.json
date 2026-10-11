@@ -30,6 +30,7 @@
     "xclip"
   ],
   "brew_packages_darwin": [],
+  "brew_tap_packages": [],
   "cargo_plugins": [
     "binstall",
     "expand",

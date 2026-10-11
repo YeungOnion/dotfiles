@@ -77,7 +77,7 @@ set -l f (_fixture)
 function _fixture_data
     set -l f (mktemp --suffix .json)
     set -ga _fixtures $f
-    echo '{"fish_plugins": ["patrickf1/fzf.fish"], "brew_packages": ["bat"], "fish_universal": {"EDITOR": "hx"}}' | jq . > $f
+    echo '{"fish_plugins": ["patrickf1/fzf.fish"], "brew_packages": ["bat"], "brew_tap_packages": [], "fish_universal": {"EDITOR": "hx"}}' | jq . > $f
     chmod 644 $f
     echo $f
 end
@@ -100,6 +100,28 @@ set -l f (_fixture_data)
 set -l f (_fixture_data)
 @test "package name with ; is rejected" \
     ($_edit $f list-add brew_packages 'x;rm' 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "owner/tap/formula is accepted in brew_tap_packages" \
+    ($_edit $f list-add brew_tap_packages oven-sh/bun/bun; and jq -r '.brew_tap_packages[-1]' $f) = oven-sh/bun/bun
+
+set -l f (_fixture_data)
+@test "brew_tap_packages entry without a tap is rejected" \
+    ($_edit $f list-add brew_tap_packages bun 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "brew_tap_packages entry with an extra segment is rejected" \
+    ($_edit $f list-add brew_tap_packages a/b/c/d 2>/dev/null; echo $status) = 1
+
+# brew install owner/tap/formula taps on its own: outside brew_tap_packages it would
+# skip the trust prompt
+set -l f (_fixture_data)
+@test "tap formula in brew_packages is rejected" \
+    ($_edit $f list-add brew_packages oven-sh/bun/bun 2>/dev/null; echo $status) = 1
+
+set -l f (_fixture_data)
+@test "tap rejection points at brew_tap_packages" \
+    (string match -q '*use brew_tap_packages*' ($_edit $f list-add brew_packages oven-sh/bun/bun 2>&1); and echo yes; or echo no) = yes
 
 set -l f (_fixture_data)
 @test "invalid variable name is rejected" \
