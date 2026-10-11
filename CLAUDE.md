@@ -70,8 +70,13 @@ universal vars) — an mtime-only change, not a test side effect.
 
 ## chezmoi.test.toml
 
-Contains only `[data]\n  java_home = ""` — just enough to satisfy `promptStringOnce`
-without interactive prompts. Package lists, fish plugins and universals come from JSON in
+Contains `[data]\n  java_home = ""` plus a `[data.brew_tap_trust]` answer for every tap in
+`brew_tap_packages` — just enough to satisfy the `prompt*Once` calls without interactive
+prompts. A real `chezmoi init` with no TTY and no stored answer fails (`could not open a new
+TTY`), while `execute-template --init` silently renders `false`; only the test in
+`brew_taps_test.fish` catches a missing answer before the Docker build does. Changing
+`.chezmoi.toml.tmpl` makes every chezmoi command warn "config file template has changed"
+(which fails `fish_paths_test`'s diff check) until `chezmoi init` is rerun. Package lists, fish plugins and universals come from JSON in
 `home/.chezmoidata/` (source tree). It has no `fish_paths_local`, so the container renders
 only the shared PATH entries.
 

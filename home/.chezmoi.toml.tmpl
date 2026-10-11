@@ -1,7 +1,19 @@
 {{- $javaHome := promptStringOnce . "java_home" "Java home path (leave blank to auto-detect)" -}}
 {{- /* machine-only fish PATH entries; kept across `chezmoi init`, never in the repo */ -}}
 {{- $fishPathsLocal := get . "fish_paths_local" | default list -}}
+{{- /* Homebrew taps run their own formula code: ask once per tap in brew_tap_packages.
+       .chezmoidata is not loaded for this template, so read the JSON directly. */ -}}
+{{- $tapTrust := dict -}}
+{{- range get (include ".chezmoidata/packages.json" | fromJson) "brew_tap_packages" | default list -}}
+{{-   $tap := regexReplaceAll "/[^/]*$" . "" -}}
+{{-   if not (hasKey $tapTrust $tap) -}}
+{{-     $_ := set $tapTrust $tap (promptBoolOnce $ (list "brew_tap_trust" $tap) (printf "Trust Homebrew tap %s" $tap)) -}}
+{{-   end -}}
+{{- end -}}
 
 [data]
   java_home = {{ $javaHome | quote }}
   fish_paths_local = {{ $fishPathsLocal | toToml }}
+
+[data.brew_tap_trust]
+{{ $tapTrust | toToml -}}
