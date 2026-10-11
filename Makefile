@@ -23,7 +23,8 @@ test-unit:
 	         tests/fish/fish_universal_test.fish \
 	         tests/fish/zoxide_test.fish \
 	         tests/fish/fish_paths_test.fish \
-	         tests/fish/startup_test.fish'
+	         tests/fish/startup_test.fish \
+	         tests/fish/scratch_completion_test.fish'
 
 # Writes to the source and ~/.config: each test file refuses to run outside the smoke container.
 test-container:
