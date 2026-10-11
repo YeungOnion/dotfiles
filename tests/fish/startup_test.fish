@@ -25,6 +25,10 @@ for pat in 'brew shellenv' 'fish_add_path --global --path' 'mise activate' 'dire
         (count (string match -r -- $pat $_rendered)) -gt 0
 end
 
+@test "config.fish sources Nix's own snippet, guarded" \
+    (string match -q '*test -f $nix_fish; and source $nix_fish*' -- $_rendered; and echo yes; or echo no) = yes
+@test "Nix before Homebrew" \
+    (test (_line 'source \$nix_fish') -lt (_line "brew shellenv"); and echo yes; or echo no) = yes
 @test "Homebrew before PATH entries" \
     (test (_line "brew shellenv") -lt (_line "fish_add_path --global"); and echo yes; or echo no) = yes
 @test "PATH entries before tool hooks" \

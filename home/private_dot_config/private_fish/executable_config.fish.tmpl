@@ -9,6 +9,11 @@ set -gx --path GOPATH $HOME/.go
 set -gx GOBIN $GOPATH/bin
 set -gx CC cc
 
+# Nix: its own snippet (session-only fish_add_path, sourced once); skipped without Nix.
+# Before Homebrew, so brew's tools keep precedence where both provide one.
+set -l nix_fish /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.fish
+test -f $nix_fish; and source $nix_fish
+
 # Homebrew: prefix differs by OS; shellenv also sets HOMEBREW_* and MANPATH/INFOPATH
 {{ if eq .chezmoi.os "darwin" -}}
 set -l brew /opt/homebrew/bin/brew

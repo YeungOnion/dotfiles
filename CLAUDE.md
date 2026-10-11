@@ -80,7 +80,8 @@ only the shared PATH entries.
 Follows fish's documented model: `conf.d/` snippets run first (in name order), then
 `config.fish` runs last as the main file.
 - `config.fish.tmpl` owns setup in line order: environment (`RUSTUP_HOME`, `CARGO_HOME`,
-  `GOPATH`, …) → Homebrew `shellenv` (prefix per OS) → `fish_add_path --global --path` →
+  `GOPATH`, …) → Nix's own `nix-daemon.fish` (guarded; before Homebrew so brew's tools win
+  overlaps) → Homebrew `shellenv` (prefix per OS) → `fish_add_path --global --path` →
   interactive settings → tool hooks (mise, direnv, zoxide), each `command -q`-guarded and
   silent when missing.
 - `conf.d/` holds only self-contained snippets (nudge, terminal theme, installer env files,
@@ -88,6 +89,9 @@ Follows fish's documented model: `conf.d/` snippets run first (in name order), t
 - PATH is declarative: `--global --path` changes the session only, so nothing is saved to
   universal `fish_user_paths`, and removing an entry from data removes it from PATH. (Plain
   `fish_add_path` in a config file writes universal state that is never cleaned up.)
+  Universal `fish_user_paths` should stay unset; if an installer or a one-off
+  `fish_add_path` re-creates it, move the entries into data and `set -eU fish_user_paths`
+  (fish's `--on-variable` handler drops them from PATH in open shells).
 - `tests/fish/startup_test.fish` checks the order and a fresh shell (no `fish_variables`,
   bare PATH).
 
