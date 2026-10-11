@@ -118,6 +118,11 @@ which validates the whole result against `scripts/data-schema.jq` (unique entrie
 `owner/repo` unique ignoring case, safe package names, valid variable names) before
 replacing the file; it then prints the diff, then applies (named targets or `--include=scripts`, never a bare apply).
 `pkg remove` uninstalls with the package manager because script 02 only installs.
+`pkg add brew-tap owner/tap/formula` records a tap formula and runs `chezmoi init` (prompts
+once for an unanswered tap) before applying; answering no keeps the formula in data, but
+script 02 skips it with a ⏭ line. To change an answer later, edit `[data.brew_tap_trust]`
+with `chezmoi edit-config`. Tap formulas never go in the other brew lists (the schema
+rejects a `/` there): `brew install owner/tap/formula` taps on its own, skipping the prompt.
 The `chezmoi_nudge` hook prints the matching task's usage after `brew|cargo|uv tool|fisher`
 installs and removals, and `set -U`. It recognises only the kind of command and never
 parses installer arguments.

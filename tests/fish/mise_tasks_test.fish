@@ -73,6 +73,22 @@ set -l d (_task_env)
 @test "data unchanged after unknown manager" \
     (cmp -s $d/packages.json $_repo_root/home/.chezmoidata/packages.json && echo same || echo changed) = same
 
+set -l d (_task_env)
+@test "pkg add brew-tap records the formula" \
+    (_run $d pkg add brew-tap example/tap/tool >/dev/null 2>&1; jq -r '.brew_tap_packages[-1]' $d/packages.json) = example/tap/tool
+
+set -l d (_task_env)
+@test "pkg add brew rejects a tap formula" \
+    (_run $d pkg add brew example/tap/tool >/dev/null 2>&1; echo $status) = 1
+
+# a new tap needs its trust answer before script 02 renders: init, then apply
+set -l d (_task_env)
+set -l stub (mktemp -d)
+set -a _task_dirs $stub
+printf '#!/bin/sh\necho "$*" >> "$(dirname "$0")/calls"\n' > $stub/chezmoi; chmod +x $stub/chezmoi
+@test "pkg add brew-tap runs chezmoi init, then applies scripts" \
+    (env DOTFILES_CHEZMOI=$stub/chezmoi DOTFILES_DATA_DIR=$d mise -C $_repo_root run pkg add brew-tap example/tap/tool >/dev/null 2>&1; string join , < $stub/calls) = 'init,apply --include=scripts'
+
 @echo "fish-var"
 
 set -l d (_task_env)
@@ -131,6 +147,12 @@ if test "$resolved" = $gone/brew
     set -l d (_task_env)
     @test "pkg remove uninstalls an installed package" \
         (env PATH=(string join : $present $PATH) DOTFILES_CHEZMOI=$ok_chezmoi/chezmoi DOTFILES_DATA_DIR=$d mise -C $_repo_root run pkg remove brew bat >/dev/null 2>&1; string match -q 'uninstall bat' < $present/calls; and echo called; or echo skipped) = called
+
+    set -l d (_task_env)
+    $_repo_root/scripts/data-edit $d/packages.json list-add brew_tap_packages example/tap/tool
+    set -l tapped (_brew_stub 0)
+    @test "pkg remove brew-tap uninstalls by full name" \
+        (env PATH=(string join : $tapped $PATH) DOTFILES_CHEZMOI=$ok_chezmoi/chezmoi DOTFILES_DATA_DIR=$d mise -C $_repo_root run pkg remove brew-tap example/tap/tool >/dev/null 2>&1; string match -q 'uninstall example/tap/tool' < $tapped/calls; and echo called; or echo skipped) = called
 end
 
 @echo "real data untouched"
