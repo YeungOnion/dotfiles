@@ -1,2 +1,5 @@
 [data]
   java_home = ""
+
+[data.brew_tap_trust]
+  "oven-sh/bun" = false

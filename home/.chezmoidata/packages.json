@@ -30,7 +30,9 @@
     "xclip"
   ],
   "brew_packages_darwin": [],
-  "brew_tap_packages": [],
+  "brew_tap_packages": [
+    "oven-sh/bun/bun"
+  ],
   "cargo_plugins": [
     "binstall",
     "expand",
