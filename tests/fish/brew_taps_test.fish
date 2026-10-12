@@ -38,6 +38,10 @@ set -l s (_src oven-sh/bun/bun)
 @test "a stored answer is kept without prompting" \
     (_trust $s --override-data '{"brew_tap_trust":{"oven-sh/bun":true}}') = '{"oven-sh/bun":true}'
 
+set -l s (_src oven-sh/bun/bun)
+@test "a stored no wins over a prompt answer" \
+    (_trust $s --override-data '{"brew_tap_trust":{"oven-sh/bun":false}}' --promptBool 'Trust Homebrew tap oven-sh/bun=true') = '{"oven-sh/bun":false}'
+
 set -l s (_src a/t/x a/t/y)
 @test "two formulas from one tap give one key" \
     (_trust $s --promptBool 'Trust Homebrew tap a/t=true') = '{"a/t":true}'
@@ -91,6 +95,16 @@ set -l two '{"brew_tap_packages":["a/t/x","b/u/y"],"brew_tap_trust":{"a/t":true,
 
 @test "untrusted formula is reported as skipped" \
     (_render '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":false}}' | string match -q '*echo*skipping oven-sh/bun/bun*'; and echo yes; or echo no) = yes
+
+# a hand edit (chezmoi edit-config) can store a string: only a real true trusts
+@test "string \"false\" stays out of brew install" \
+    (_installs '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":"false"}}' oven-sh/bun/bun) = no
+
+# init never re-asks a stored answer: a declined tap points at edit-config instead
+@test "unanswered tap's skip line points at chezmoi init" \
+    (_render '{"brew_tap_packages":["oven-sh/bun/bun"]}' | string match -q '*skipping oven-sh/bun/bun*chezmoi init*'; and echo yes; or echo no) = yes
+@test "declined tap's skip line points at chezmoi edit-config" \
+    (_render '{"brew_tap_packages":["oven-sh/bun/bun"],"brew_tap_trust":{"oven-sh/bun":false}}' | string match -q '*skipping oven-sh/bun/bun*chezmoi edit-config*'; and echo yes; or echo no) = yes
 
 @test "rendered script parses" \
     (_render $two | bash -n; and echo yes; or echo no) = yes

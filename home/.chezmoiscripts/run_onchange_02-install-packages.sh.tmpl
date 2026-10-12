@@ -11,20 +11,29 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 export PATH="$HOME/.local/bin:$PATH"
 
 # -- Installers ---------------------------------------------------------------
-{{- /* tap formulas install only when chezmoi init stored trust for their tap */}}
+{{- /* tap formulas install only when chezmoi init stored a boolean true for their tap
+       (a hand-edited string such as "false" must not count) */}}
 {{- $trust := get . "brew_tap_trust" | default dict }}
 {{- $tapTrusted := list }}
-{{- $tapSkipped := list }}
+{{- $tapUnanswered := list }}
+{{- $tapDeclined := list }}
 {{- range get . "brew_tap_packages" | default list }}
-{{-   if get $trust (regexReplaceAll "/[^/]*$" . "") }}
+{{-   $tap := regexReplaceAll "/[^/]*$" . "" }}
+{{-   $answer := get $trust $tap }}
+{{-   if and (kindIs "bool" $answer) $answer }}
 {{-     $tapTrusted = append $tapTrusted . }}
+{{-   else if hasKey $trust $tap }}
+{{-     $tapDeclined = append $tapDeclined . }}
 {{-   else }}
-{{-     $tapSkipped = append $tapSkipped . }}
+{{-     $tapUnanswered = append $tapUnanswered . }}
 {{-   end }}
 {{- end }}
 install_brew() {
-{{- range $tapSkipped }}
-    echo "⏭  skipping {{ . }}: its tap is not trusted (answer the prompt in chezmoi init)"
+{{- range $tapUnanswered }}
+    echo "⏭  skipping {{ . }}: its tap is not trusted yet (answer the prompt in chezmoi init)"
+{{- end }}
+{{- range $tapDeclined }}
+    echo "⏭  skipping {{ . }}: its tap was declined (set brew_tap_trust with chezmoi edit-config)"
 {{- end }}
     brew install {{ .brew_packages | join " " }}{{ with index . (printf "brew_packages_%s" .chezmoi.os) }} {{ . | join " " }}{{ end }}{{ range $tapTrusted }} {{ . }}{{ end }}
 }
