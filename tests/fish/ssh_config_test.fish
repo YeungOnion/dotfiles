@@ -1,5 +1,5 @@
 #!/usr/bin/env fish
-# ssh config: the desktop-wsl login user is a per-machine answer from chezmoi init, and
+# ssh config: the blizzard-vjff9dr-wsl login user is a per-machine answer from chezmoi init, and
 # machine-only hosts live in ~/.ssh/config.local, which chezmoi refuses to add.
 # Run: fishtape tests/fish/ssh_config_test.fish
 
@@ -14,44 +14,44 @@ set -g _bare_cfg (mktemp --suffix .toml)
 set -ga _tmp $_bare_cfg
 printf '[data]\n  java_home = ""\n' > $_bare_cfg
 
-function _user --description 'render the config template (argv: chezmoi flags), read desktop_wsl_user back as chezmoi would'
+function _user --description 'render the config template (argv: chezmoi flags), read cc_host_user back as chezmoi would'
     set -l cfg (mktemp --suffix .toml)
     set -ga _tmp $cfg
     chezmoi --config $_bare_cfg --source $_repo_root/home execute-template --init $argv < $_cfg_tmpl > $cfg; or return 1
-    chezmoi --config $cfg execute-template '{{ get . "desktop_wsl_user" | toJson }}'
+    chezmoi --config $cfg execute-template '{{ get . "cc_host_user" | toJson }}'
 end
 
-@echo "config template: desktop_wsl_user"
+@echo "config template: cc_host_user"
 
 @test "an answer is stored" \
-    (_user --promptString 'Linux user on desktop-wsl (blank: no ssh entry)=alice') = '"alice"'
+    (_user --promptString 'Linux user on blizzard-vjff9dr-wsl (blank: no ssh entry)=alice') = '"alice"'
 
 @test "a stored answer is kept without prompting" \
-    (_user --override-data '{"desktop_wsl_user":"alice"}') = '"alice"'
+    (_user --override-data '{"cc_host_user":"alice"}') = '"alice"'
 
-@test "chezmoi.test.toml answers desktop_wsl_user" \
-    (chezmoi --config $_test_cfg execute-template '{{ hasKey . "desktop_wsl_user" }}') = true
+@test "chezmoi.test.toml answers cc_host_user" \
+    (chezmoi --config $_test_cfg execute-template '{{ hasKey . "cc_host_user" }}') = true
 
 @echo "ssh config template"
 
-function _ssh --description 'render the ssh config for desktop_wsl_user $argv[1] into a temp file, print its path'
+function _ssh --description 'render the ssh config for cc_host_user $argv[1] into a temp file, print its path'
     set -l f (mktemp)
     set -ga _tmp $f
-    chezmoi --config $_bare_cfg execute-template --override-data (jq -nc --arg u $argv[1] '{desktop_wsl_user: $u}') < $_ssh_tmpl > $f; or return 1
+    chezmoi --config $_bare_cfg execute-template --override-data (jq -nc --arg u $argv[1] '{cc_host_user: $u}') < $_ssh_tmpl > $f; or return 1
     echo $f
 end
 
 set -l f (_ssh alice)
-@test "ssh logs in to desktop-wsl as the answer" \
-    (ssh -G -F $f desktop-wsl </dev/null | string match -r '^user .*') = 'user alice'
+@test "ssh logs in to blizzard-vjff9dr-wsl as the answer" \
+    (ssh -G -F $f blizzard-vjff9dr-wsl </dev/null | string match -r '^user .*') = 'user alice'
 
 # Include inside a Host block applies only to that host: it must precede every Host line
 @test "config.local is included before any Host block" \
     (string match -rv '^\s*(#.*)?$' < $f)[1] = 'Include config.local'
 
 set -l f (_ssh '')
-@test "a blank answer renders no desktop-wsl entry" \
-    (string match -q '*desktop-wsl*' < $f; and echo yes; or echo no) = no
+@test "a blank answer renders no blizzard-vjff9dr-wsl entry" \
+    (string match -q '*blizzard-vjff9dr-wsl*' < $f; and echo yes; or echo no) = no
 
 @echo "chezmoi add refuses ~/.ssh contents other than config"
 
@@ -70,5 +70,12 @@ end
 @test "a key is ignored" (_ignored .ssh/id_test) = yes
 touch $_dest/.ssh/config
 @test "config itself is not ignored" (_ignored .ssh/config) = no
+
+
+@echo "the cc abbr attaches to the same host"
+
+set -g _host (string match -rg '^Host (\S+)' < $_ssh_tmpl)
+@test "cc abbr targets the ssh config's Host" \
+    (string match -q "*ssh -t $_host tmux attach -t cc*" < $_repo_root/home/private_dot_config/private_fish/aliases.fish; and echo yes; or echo no) = yes
 
 trash $_tmp

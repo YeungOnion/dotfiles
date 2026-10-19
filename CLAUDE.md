@@ -70,7 +70,7 @@ universal vars) — an mtime-only change, not a test side effect.
 
 ## chezmoi.test.toml
 
-Contains `[data]` with `java_home = ""` and `desktop_wsl_user = ""`, plus a `[data.brew_tap_trust]` answer for every tap in
+Contains `[data]` with `java_home = ""` and `cc_host_user = ""`, plus a `[data.brew_tap_trust]` answer for every tap in
 `brew_tap_packages` — just enough to satisfy the `prompt*Once` calls without interactive
 prompts. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/`
 (source tree). It has no `fish_paths_local`, so the container renders only the shared PATH
@@ -93,7 +93,7 @@ values and keeps the rest).
 ## ssh config: shared hosts in the repo, the rest in config.local
 
 The repo is public. `~/.ssh/config` is a template whose host users come from `prompt*Once`
-answers (`desktop_wsl_user`; blank renders no entry), so usernames stay in the local
+answers (`cc_host_user`; blank renders no entry), so usernames stay in the local
 chezmoi config. Its first line is `Include config.local`: ssh takes the first value it
 reads, so `~/.ssh/config.local` overrides repo entries, and an `Include` inside a `Host`
 block would apply only to that host. `.chezmoiignore` ignores `.ssh/*` except `config`, so
