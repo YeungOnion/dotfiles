@@ -25,7 +25,8 @@ test-unit:
 	         tests/fish/fish_paths_test.fish \
 	         tests/fish/startup_test.fish \
 	         tests/fish/scratch_completion_test.fish \
-	         tests/fish/brew_taps_test.fish'
+	         tests/fish/brew_taps_test.fish \
+	         tests/fish/ssh_config_test.fish'
 
 # Writes to the source and ~/.config: each test file refuses to run outside the smoke container.
 test-container:

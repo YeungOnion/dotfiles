@@ -1,5 +1,6 @@
 [data]
   java_home = ""
+  desktop_wsl_user = ""
 
 [data.brew_tap_trust]
   "oven-sh/bun" = false

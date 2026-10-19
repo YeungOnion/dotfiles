@@ -2,6 +2,9 @@
 .config/fish/completions/chezmoi.fish
 .config/fish/completions/swamp.fish
 .config/fish/conf.d/fish_frozen_key_bindings.fish
+# Keys and machine-only ssh config (config.local) never enter the repo
+.ssh/*
+!.ssh/config
 # fisher-owned files, read from fisher's own record at render time.
 # Plain `fish -c`: --no-config would hide universal variables.
 {{ if lookPath "fish" -}}

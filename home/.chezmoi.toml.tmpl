@@ -1,4 +1,6 @@
 {{- $javaHome := promptStringOnce . "java_home" "Java home path (leave blank to auto-detect)" -}}
+{{- /* the Linux user differs per machine; kept out of the public repo */ -}}
+{{- $desktopWslUser := promptStringOnce . "desktop_wsl_user" "Linux user on desktop-wsl (blank: no ssh entry)" -}}
 {{- /* machine-only fish PATH entries; kept across `chezmoi init`, never in the repo */ -}}
 {{- $fishPathsLocal := get . "fish_paths_local" | default list -}}
 {{- /* Homebrew taps run their own formula code: ask once per tap in brew_tap_packages.
@@ -13,6 +15,7 @@
 
 [data]
   java_home = {{ $javaHome | quote }}
+  desktop_wsl_user = {{ $desktopWslUser | quote }}
   fish_paths_local = {{ $fishPathsLocal | toToml }}
 
 [data.brew_tap_trust]

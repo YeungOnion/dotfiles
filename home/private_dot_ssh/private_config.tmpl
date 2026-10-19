@@ -1,0 +1,9 @@
+# Machine-only hosts go in ~/.ssh/config.local, which chezmoi ignores.
+# First value wins in ssh config, so it overrides the entries below.
+Include config.local
+{{- with .desktop_wsl_user }}
+
+# Tailscale SSH host for persistent Claude Code
+Host desktop-wsl
+    User {{ . }}
+{{- end }}
