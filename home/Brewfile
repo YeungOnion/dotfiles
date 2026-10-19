@@ -1,0 +1,103 @@
+tap "anomalyco/tap"
+tap "eth-p/software"
+tap "oven-sh/bun"
+tap "teddytennant/tap"
+tap "vectordotdev/brew", trusted: { formulae: ["vector"] }
+# Record and share terminal sessions
+brew "asciinema"
+# Perl compatible regular expressions library with a new API
+brew "pcre2"
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
+# Bash scripts that integrate bat with various command-line tools
+brew "bat-extras", link: false
+# Resource monitor. C++ version and continuation of bashtop and bpytop
+brew "btop"
+# Diff that understands syntax
+brew "difftastic"
+# Command-line tool to interact with exercism.io
+brew "exercism"
+# Perl lib for reading and writing EXIF metadata
+brew "exiftool"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# User-friendly command-line shell for UNIX-like operating systems
+brew "fish"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# Geospatial Data Abstraction Library
+brew "gdal"
+# GitHub command-line tool
+brew "gh"
+# Interpreter for PostScript and PDF
+brew "ghostscript"
+# Distributed revision control system
+brew "git"
+# High-velocity, monorepo-scale workflow for Git
+brew "git-branchless"
+# Highly customizable changelog generator
+brew "git-cliff"
+# Syntax-highlighting pager for git and diff output
+brew "git-delta"
+# Post-modern modal text editor
+brew "helix"
+# Run and Test HTTP Requests with plain text and curl
+brew "hurl"
+# Git-compatible distributed version control system
+brew "jj"
+# TUI for interacting with the Jujutsu version control system
+brew "jjui"
+# Lazier way to manage everything docker
+brew "lazydocker"
+# Language Server Protocol for Markdown
+brew "marksman"
+# Menu-driven communications program
+brew "minicom"
+# Search tool like grep and The Silver Searcher
+brew "ripgrep"
+# Terminal based presentation tool
+brew "slides"
+# ISO/Edinburgh-style Prolog interpreter
+brew "swi-prolog"
+# General purpose fuzzy finder TUI
+brew "television"
+# Manage complex tmux sessions easily
+brew "tmuxinator"
+# Display directories as trees (with optional color/HTML output)
+brew "tree"
+# Generator for LS_COLORS with support for multiple color themes
+brew "vivid"
+# Access X11 clipboards from the command-line
+brew "xclip"
+# Command-line tool that draw plots on the terminal
+brew "youplot"
+# Shell extension to navigate your filesystem faster
+brew "zoxide"
+# The AI coding agent built for the terminal.
+brew "anomalyco/tap/opencode", trusted: true
+# Read system manual pages using bat as the manual page formatter
+brew "eth-p/software/bat-extras-batman", trusted: true
+# Incredibly fast JavaScript runtime, bundler, transpiler and package manager - all in one.
+brew "oven-sh/bun/bun", trusted: true
+# One line. Your sovereign agent. Self-extending. Bring any model
+brew "teddytennant/tap/wizard", trusted: true
+cargo "aoc-cli"
+cargo "ast-grep"
+cargo "cargo-binstall"
+cargo "cargo-expand"
+cargo "cargo-hack"
+cargo "cargo-llvm-cov"
+cargo "cargo-nextest"
+cargo "cargo-release"
+cargo "cargo-shuttle"
+cargo "cargo-spellcheck"
+cargo "cargo-zigbuild"
+cargo "difftastic"
+cargo "git-branchless"
+cargo "git-delta"
+cargo "jj-cli"
+cargo "tauri-cli"
+cargo "toml-cli"
+cargo "trash-cli-rs"
+cargo "xsv"
+npm "corepack"
