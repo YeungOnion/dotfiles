@@ -10,7 +10,7 @@ abbr --add tree --position command tree --gitignore
 abbr --add glow --position command glow --pager
 abbr --add ardo --position command arduino-cli
 abbr --add mux --position command tmuxinator
-abbr --add cc --position command ssh -t blizzard-vjff9dr-wsl tmux attach -t cc # persistent claude on desktop
+abbr --add cc --position command ssh -t blizzard-vjff9dr-wsl tmux new-session -A -s cc # persistent claude on desktop; creates cc if gone
 
 alias du 'du -h'
 alias mkdir 'mkdir -p'

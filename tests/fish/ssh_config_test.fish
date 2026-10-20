@@ -75,7 +75,8 @@ touch $_dest/.ssh/config
 @echo "the cc abbr attaches to the same host"
 
 set -g _host (string match -rg '^Host (\S+)' < $_ssh_tmpl)
+# new-session -A attaches to cc, or creates it when the server or session is gone
 @test "cc abbr targets the ssh config's Host" \
-    (string match -q "*ssh -t $_host tmux attach -t cc*" < $_repo_root/home/private_dot_config/private_fish/aliases.fish; and echo yes; or echo no) = yes
+    (string match -q "*ssh -t $_host tmux new-session -A -s cc*" < $_repo_root/home/private_dot_config/private_fish/aliases.fish; and echo yes; or echo no) = yes
 
 trash $_tmp
