@@ -169,6 +169,8 @@ Testing tasks:
 
 ## fish/fishtape gotchas
 
+- `trash` (cargo, 1.0.0) follows symlinks: on a dangling one it reports
+  `No such file or directory`. A dangling link holds no data; `unlink` it.
 - `$a:$PATH` expands once per PATH element (PATH is a list). Build PATH values with
   `(string join : $a $PATH)`.
 - fishtape drops a `@test` whose `"$(…)"` hits an unknown command: it prints neither
