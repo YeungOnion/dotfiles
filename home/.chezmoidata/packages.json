@@ -24,7 +24,9 @@
     "tmuxinator",
     "tree",
     "youplot",
-    "zoxide"
+    "zoxide",
+    "vivid",
+    "usage"
   ],
   "brew_packages_linux": [
     "xclip"
