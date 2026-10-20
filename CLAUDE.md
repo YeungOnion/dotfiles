@@ -99,6 +99,20 @@ reads, so `~/.ssh/config.local` overrides repo entries, and an `Include` inside 
 block would apply only to that host. `.chezmoiignore` ignores `.ssh/*` except `config`, so
 `chezmoi add` refuses `config.local` and keys (`ssh_config_test.fish`).
 
+## fish version: Homebrew 4.x only
+
+fish comes from Homebrew (`fish` in `brew_packages`), at
+`/home/linuxbrew/.linuxbrew/bin/fish`, which is also the login shell. Do not
+hard-code a fish path elsewhere: Windows Terminal, WezTerm (no `default_prog`; it
+runs the passwd login shell as `-fish`) and tmux all start the login shell.
+- Two fish versions sharing `~/.config/fish` fight over universals: 4.3+ stops
+  setting `fish_color_*` and moves `fish_key_bindings` into `conf.d/fish_frozen_*`,
+  so 3.x shells lost all colors, and `__fish_initialized` flipped between them.
+  Key bindings use 4.x notation (`ctrl-r`); 3.x binds that as literal characters.
+- systemd units do not get the login PATH: `terminal-theme-poll.service` runs fish
+  and `reg.exe` by absolute path (no PATH rendered at apply time, which once
+  rendered `.` for reg.exe).
+
 ## fish startup layout and PATH entries
 
 Follows fish's documented model: `conf.d/` snippets run first (in name order), then
