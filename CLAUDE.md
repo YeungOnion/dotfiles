@@ -70,7 +70,7 @@ universal vars) — an mtime-only change, not a test side effect.
 
 ## chezmoi.test.toml
 
-Contains `[data]` with `java_home = ""` and `cc_host_user = ""`, plus a `[data.brew_tap_trust]` answer for every tap in
+Contains `[data]` with `java_home = ""`, `cc_host_user = ""` and `cc_host = false`, plus a `[data.brew_tap_trust]` answer for every tap in
 `brew_tap_packages` — just enough to satisfy the `prompt*Once` calls without interactive
 prompts. Package lists, fish plugins and universals come from JSON in `home/.chezmoidata/`
 (source tree). It has no `fish_paths_local`, so the container renders only the shared PATH
@@ -98,6 +98,11 @@ chezmoi config. Its first line is `Include config.local`: ssh takes the first va
 reads, so `~/.ssh/config.local` overrides repo entries, and an `Include` inside a `Host`
 block would apply only to that host. `.chezmoiignore` ignores `.ssh/*` except `config`, so
 `chezmoi add` refuses `config.local` and keys (`ssh_config_test.fish`).
+
+The machine that serves those sessions answers `cc_host` (promptBoolOnce) yes. Only then is
+`tmux-cc.service` deployed (`.chezmoiignore`) and enabled by script 07, which also warns when
+linger is off or the Windows `WSL keepalive` task is missing (it never creates the task).
+Answering no later does not disable an already-enabled service.
 
 ## fish version: Homebrew 4.x only
 

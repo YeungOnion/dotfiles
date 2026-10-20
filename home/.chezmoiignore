@@ -2,6 +2,10 @@
 .config/fish/completions/chezmoi.fish
 .config/fish/completions/swamp.fish
 .config/fish/conf.d/fish_frozen_key_bindings.fish
+# tmux-cc keeps a tmux session for remote Claude Code; only on the cc host (chezmoi init)
+{{ if not (get . "cc_host") -}}
+.config/systemd/user/tmux-cc.service
+{{ end -}}
 # Keys and machine-only ssh config (config.local) never enter the repo
 .ssh/*
 !.ssh/config

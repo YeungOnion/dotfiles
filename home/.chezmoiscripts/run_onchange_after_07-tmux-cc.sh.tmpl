@@ -1,0 +1,26 @@
+{{ if get . "cc_host" -}}
+#!/bin/bash
+set -eufo pipefail
+
+# Only on the cc host (chezmoi init answer cc_host); renders empty elsewhere, so chezmoi skips it.
+# unit file: {{ include (joinPath .chezmoi.sourceDir "private_dot_config" "systemd" "user" "tmux-cc.service") | sha256sum }}
+
+if command -v systemctl &>/dev/null && systemctl --user status &>/dev/null; then
+    systemctl --user daemon-reload
+    systemctl --user enable --now tmux-cc.service
+fi
+
+# Without linger the user manager, and tmux-cc with it, stops when the last login session ends.
+if [ "$(loginctl show-user "$USER" -p Linger --value 2>/dev/null)" != yes ]; then
+    echo "⚠ linger is off: run 'loginctl enable-linger $USER' so tmux-cc survives logouts" >&2
+fi
+
+# WSL shuts the distro down without a Windows-side session; a logon task holds one open.
+ps=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ] && [ -x "$ps" ]; then
+    if ! "$ps" -NoProfile -Command 'Get-ScheduledTask -TaskName "WSL keepalive"' &>/dev/null; then
+        echo "⚠ no Windows task 'WSL keepalive': create a logon task running" >&2
+        echo "  conhost.exe --headless wsl.exe -d ${WSL_DISTRO_NAME:-<distro>} --exec sleep infinity" >&2
+    fi
+fi
+{{ end -}}

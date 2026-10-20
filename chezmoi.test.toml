@@ -1,6 +1,7 @@
 [data]
   java_home = ""
   cc_host_user = ""
+  cc_host = false
 
 [data.brew_tap_trust]
   "oven-sh/bun" = false
