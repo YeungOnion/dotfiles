@@ -99,7 +99,9 @@ reads, so `~/.ssh/config.local` overrides repo entries, and an `Include` inside 
 block would apply only to that host. `.chezmoiignore` ignores `.ssh/*` except `config`, so
 `chezmoi add` refuses `config.local` and keys (`ssh_config_test.fish`).
 
-The machine that serves those sessions answers `cc_host` (promptBoolOnce) yes. Only then is
+The machine that serves those sessions answers `cc_host` (promptBoolOnce) yes. It is asked
+first; a cc host is never asked `cc_host_user` and stores it blank (no ssh entry for itself,
+even over an old answer). Only on a cc host is
 `tmux-cc.service` deployed (`.chezmoiignore`) and enabled by script 07, which also warns when
 linger is off or the Windows `WSL keepalive` task is missing (it never creates the task).
 Answering no later does not disable an already-enabled service.

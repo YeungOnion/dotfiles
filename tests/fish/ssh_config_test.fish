@@ -29,6 +29,13 @@ end
 @test "a stored answer is kept without prompting" \
     (_user --override-data '{"cc_host_user":"alice"}') = '"alice"'
 
+# the cc host is the ssh target, not a client: it gets no entry for itself
+@test "the cc host stores a blank user, even over an old answer" \
+    (_user --override-data '{"cc_host":true,"cc_host_user":"alice"}') = '""'
+
+@test "a client keeps its answer" \
+    (_user --override-data '{"cc_host":false,"cc_host_user":"alice"}') = '"alice"'
+
 @test "chezmoi.test.toml answers cc_host_user" \
     (chezmoi --config $_test_cfg execute-template '{{ hasKey . "cc_host_user" }}') = true
 

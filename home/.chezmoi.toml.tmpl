@@ -1,8 +1,12 @@
 {{- $javaHome := promptStringOnce . "java_home" "Java home path (leave blank to auto-detect)" -}}
-{{- /* the Linux user differs per machine; kept out of the public repo */ -}}
-{{- $ccHostUser := promptStringOnce . "cc_host_user" "Linux user on blizzard-vjff9dr-wsl (blank: no ssh entry)" -}}
 {{- /* this machine is the cc host: deploys and enables tmux-cc.service */ -}}
 {{- $ccHost := promptBoolOnce . "cc_host" "Keep WSL and tmux ready for remote Claude Code sessions on this machine" -}}
+{{- /* the Linux user differs per machine; kept out of the public repo.
+       The cc host is the ssh target, so it is not asked and gets no entry for itself. */ -}}
+{{- $ccHostUser := "" -}}
+{{- if not $ccHost -}}
+{{-   $ccHostUser = promptStringOnce . "cc_host_user" "Linux user on blizzard-vjff9dr-wsl (blank: no ssh entry)" -}}
+{{- end -}}
 {{- /* machine-only fish PATH entries; kept across `chezmoi init`, never in the repo */ -}}
 {{- $fishPathsLocal := get . "fish_paths_local" | default list -}}
 {{- /* Homebrew taps run their own formula code: ask once per tap in brew_tap_packages.
