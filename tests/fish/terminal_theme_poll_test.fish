@@ -37,4 +37,32 @@ set -Ue _test_theme
 @test "returns 0 when query returns a known value" \
     (set -Ue _test_theme; __terminal_theme_poll_sync _test_theme echo light; echo $status) = 0
 
+# A query that fails before printing (reg.exe missing) yields no output, not
+# "unknown"; that must not empty the variable.
+@test "does not write when query prints nothing" \
+    (set -U _test_theme light; __terminal_theme_poll_sync _test_theme true; echo $_test_theme) = light
+
+@test "returns 1 when query prints nothing" \
+    (set -U _test_theme light; __terminal_theme_poll_sync _test_theme true; echo $status) = 1
+
+@test "does not write when query prints neither light nor dark" \
+    (set -U _test_theme light; __terminal_theme_poll_sync _test_theme echo garbage; echo $_test_theme) = light
+
 set -Ue _test_theme
+
+# ── systemd unit: no PATH lookup ─────────────────────────────────
+
+@echo "systemd unit: no PATH lookup"
+
+set -g _unit $_repo_root/home/private_dot_config/systemd/user/terminal-theme-poll.service
+
+# A PATH rendered at apply time depended on the applying shell (it once
+# rendered `.` for reg.exe), so the unit names fish by absolute path.
+@test "service unit is static, not a template" \
+    (test -f $_unit; and not test -e $_unit.tmpl; echo $status) = 0
+
+@test "service runs the script with fish by absolute path" \
+    (string match -rq '^ExecStart=/\S+/fish %h/' <$_unit; echo $status) = 0
+
+@test "service sets no PATH" \
+    (string match -q 'Environment=PATH*' <$_unit; echo $status) = 1

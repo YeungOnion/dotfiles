@@ -11,9 +11,15 @@ function __terminal_theme_parse
     end
 end
 
-# Impure: query Windows registry, print result to stdout
-function __terminal_theme_query
-    __terminal_theme_parse (reg.exe query \
+# Impure: query Windows registry, print result to stdout. reg.exe is called by
+# absolute path (WSL's default C: mount): no PATH it runs under carries Windows dirs.
+function __terminal_theme_query -a reg
+    set -q reg[1]; or set reg /mnt/c/Windows/System32/reg.exe
+    if not test -x $reg
+        echo unknown
+        return
+    end
+    __terminal_theme_parse ($reg query \
         "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" \
         /v AppsUseLightTheme 2>/dev/null)
 end

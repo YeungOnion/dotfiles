@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll Windows registry for light/dark theme, push into fish terminal_theme uvar
+
+[Service]
+Type=oneshot
+TimeoutStartSec=1s
+# systemd --user's default PATH has neither Homebrew's fish nor WSL's Windows
+# dirs, so nothing here relies on PATH: fish is named by absolute path (not the
+# script's `#!/usr/bin/env fish`), and __terminal_theme_query calls reg.exe by
+# absolute path. A PATH rendered at chezmoi-apply time used to depend on the
+# applying shell, and once rendered `.` for reg.exe.
+ExecStart=/home/linuxbrew/.linuxbrew/bin/fish %h/.config/fish/scripts/terminal-theme-poll.fish

@@ -39,6 +39,9 @@ set -l _dark_reg "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersio
 @test "returns unknown for unrecognised value" \
     (__terminal_theme_parse "garbage") = unknown
 
+@test "query prints unknown when reg.exe is missing" \
+    (__terminal_theme_query /nonexistent/reg.exe 2>&1) = unknown
+
 # ── Theme name mapping: pure logic ────────────────────────────────────────────
 
 @echo "bat theme name mapping"
