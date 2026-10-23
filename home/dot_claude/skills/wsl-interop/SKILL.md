@@ -1,6 +1,6 @@
 ---
 name: wsl-interop
-description: Cheatsheet for crossing between Windows and WSL2 in either direction - calling Windows tools from a distro, calling a distro from Windows or from another distro, wsl.exe --exec quirks, .wslconfig changes, wsl --shutdown, Docker Desktop's WSL integration and the shared /mnt/wsl mount. Use before running wsl.exe, powershell.exe or Docker Desktop commands from WSL, or WSL commands from Windows.
+description: Use before crossing between Windows and WSL2 - wsl.exe, powershell.exe, wsl --exec, .wslconfig, wsl --shutdown, Docker Desktop integration, /mnt/wsl.
 ---
 
 # WSL interop cheatsheet

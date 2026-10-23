@@ -1,6 +1,6 @@
 ---
 name: agent-coordination
-description: Patterns for working with other agents - peer Claude sessions, subagents, remote or cloud sessions - toward a shared goal. Covers delivery guarantees, self-reported versus observed state, durable request/result channels, steps that end the requester, and who owns the goal. Use before sending work to another agent, when relying on another agent's report, or when designing a hand-off between sessions. Draft; to be elaborated.
+description: Use before handing work to another agent (peer session, subagent, remote session) or relying on its report.
 ---
 
 # Agent coordination
