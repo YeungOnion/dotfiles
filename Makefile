@@ -30,7 +30,8 @@ test-unit:
 	         tests/fish/brew_taps_test.fish \
 	         tests/fish/ssh_config_test.fish \
 	         tests/fish/tmux_host_marker_test.fish \
-	         tests/fish/inline_script_guard_test.fish'
+	         tests/fish/inline_script_guard_test.fish \
+	         tests/fish/umask_test.fish'
 
 # Writes to the source and ~/.config: each test file refuses to run outside the smoke container.
 test-container:

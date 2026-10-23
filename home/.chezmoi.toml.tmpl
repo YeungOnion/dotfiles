@@ -19,6 +19,9 @@
 {{-   end -}}
 {{- end -}}
 
+# chezmoi otherwise uses the applying shell's umask; 0002 made deployed files group-writable
+umask = 0o022
+
 [data]
   java_home = {{ $javaHome | quote }}
   cc_host_user = {{ $ccHostUser | quote }}

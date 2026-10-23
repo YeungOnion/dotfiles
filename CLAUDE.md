@@ -80,6 +80,15 @@ A real `chezmoi init` with no TTY and no stored answer fails (`could not open a 
 while `execute-template --init` silently renders `false`; only the test in
 `brew_taps_test.fish` catches a missing answer before the Docker build does.
 
+## umask is pinned in the config template
+
+chezmoi creates files with the applying process's umask unless config sets `umask`.
+Agent shells here run with 0002, so an apply made deployed files group-writable (even
+`~/.claude/hooks`), and `chezmoi status` listed every file as `M` for a mode-only diff.
+`.chezmoi.toml.tmpl` sets `umask = 0o022`; `chezmoi dump-config --format json | jq .umask`
+prints 18 once `chezmoi init` has rendered it (2 means the shell's 0002 is in effect).
+`tests/fish/umask_test.fish` applies to a temp destination under umask 0002 to prove it.
+
 ## Local config changes need `chezmoi init` on each machine
 
 The local `~/.config/chezmoi/chezmoi.toml` is rendered from `.chezmoi.toml.tmpl` only by
