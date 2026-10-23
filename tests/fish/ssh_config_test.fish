@@ -83,7 +83,17 @@ touch $_dest/.ssh/config
 
 set -g _host (string match -rg '^Host (\S+)' < $_ssh_tmpl)
 # new-session -A attaches to cc, or creates it when the server or session is gone
+set -g _cc_abbr (fish --no-config -c "source $_repo_root/home/private_dot_config/private_fish/aliases.fish; abbr --show" | string match '* -- cc *')
 @test "cc abbr targets the ssh config's Host" \
-    (string match -q "*ssh -t $_host tmux new-session -A -s cc*" < $_repo_root/home/private_dot_config/private_fish/aliases.fish; and echo yes; or echo no) = yes
+    (string match -q "*ssh -t $_host *tmux new-session -A -s cc*" -- $_cc_abbr; and echo yes; or echo no) = yes
+
+# single-quoted in the abbr, so $terminal_theme expands on the client when cc runs
+@test "cc abbr forwards the client's terminal_theme unexpanded" \
+    (string match -q '*"terminal_theme $(string escape -- "$terminal_theme"); tmux*' -- $_cc_abbr; and echo yes; or echo no) = yes
+
+# the host's fish parses the forwarded string: a hostile value must stay one literal argument
+@test "forwarded terminal_theme cannot inject commands on the host" \
+    (set -l terminal_theme 'light; echo PWNED'
+     fish --no-config -c "function terminal_theme; echo \$argv; end; terminal_theme $(string escape -- "$terminal_theme")") = 'light; echo PWNED'
 
 trash $_tmp
