@@ -80,6 +80,22 @@ A real `chezmoi init` with no TTY and no stored answer fails (`could not open a 
 while `execute-template --init` silently renders `false`; only the test in
 `brew_taps_test.fish` catches a missing answer before the Docker build does.
 
+## Agent shells run with umask 0002: fix modes, don't apply them
+
+chezmoi computes target modes from the applying process's umask. Agent shells here run
+with 0002, while deployed files were applied under 022, so from an agent shell
+`chezmoi status` lists nearly every file as `M` for a mode-only diff, and an apply would
+make them group-writable (`~/.claude/hooks` included). That is the agent's environment, not
+a repo problem: do not pin `umask` in chezmoi config.
+- Before applying, check `umask`. Under 0002, apply only named targets, in one Bash call
+  prefixed with `umask 022;`, and check the result with `stat -c %a`.
+- To tell content changes from mode noise, filter `chezmoi diff --no-pager </dev/null`:
+  lines other than `diff --git`/`old mode`/`new mode` are content.
+- Files an earlier apply loosened show `old mode 100664`/`100775` (`40775` for dirs). Fix
+  them with `chmod` to what the source implies (644 files, 755 for `executable_` files and
+  directories, 600/700 for `private_`) after confirming the diff is mode-only. If which
+  mode is right is unclear, list the files and ask the user instead.
+
 ## Local config changes need `chezmoi init` on each machine
 
 The local `~/.config/chezmoi/chezmoi.toml` is rendered from `.chezmoi.toml.tmpl` only by
