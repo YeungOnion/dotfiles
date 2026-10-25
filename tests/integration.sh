@@ -67,15 +67,34 @@ for f in \
     "$HOME/.config/fish/config.fish" \
     "$HOME/.config/fish/fish_plugins" \
     "$HOME/.config/fish/functions/__terminal_theme_poll_sync.fish" \
+    "$HOME/.config/fish/functions/terminal_theme.fish" \
+    "$HOME/.config/fish/functions/__terminal_theme_assign.fish" \
+    "$HOME/.config/fish/functions/__terminal_theme_publish.fish" \
+    "$HOME/.config/fish/functions/__terminal_theme_tmux.fish" \
+    "$HOME/.config/fish/functions/claude.fish" \
     "$HOME/.config/fish/scripts/terminal-theme-poll.fish" \
     "$HOME/.config/systemd/user/terminal-theme-poll.service" \
-    "$HOME/.config/systemd/user/terminal-theme-poll.timer"; do
+    "$HOME/.config/systemd/user/terminal-theme-poll.timer" \
+    "$HOME/.local/state/terminal-theme/target"; do
     if [[ -f "$f" ]]; then
         ok "${f/$HOME/~} deployed"
     else
         check_fail "${f/$HOME/~} not deployed"
     fi
 done
+
+# the target state directory is private, and the retired tmux-theme-sync.sh is gone
+state_dir="$HOME/.local/state/terminal-theme"
+if [[ "$(stat -c %a "$state_dir" 2>/dev/null)" == 700 ]]; then
+    ok "terminal-theme state directory is 700"
+else
+    check_fail "terminal-theme state directory is $(stat -c %a "$state_dir" 2>/dev/null) (expected 700)"
+fi
+if [[ ! -e "$HOME/.config/tmux/scripts/tmux-theme-sync.sh" ]]; then
+    ok "tmux-theme-sync.sh not deployed"
+else
+    check_fail "tmux-theme-sync.sh still deployed"
+fi
 
 # terminal-theme-poll.fish must be executable (systemd invokes it directly)
 poll_script="$HOME/.config/fish/scripts/terminal-theme-poll.fish"
