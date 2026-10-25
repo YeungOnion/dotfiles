@@ -149,4 +149,163 @@ set -g _count 'set -g n 0; function _c --on-variable terminal_theme; set -g n (m
 @test "publishing a new value fires the handler once" \
     (_tt '__terminal_theme_publish dark'; _tt "$_count; __terminal_theme_publish light; echo \$n") = 1
 
+# ── terminal_theme: the CLI on the target state ───────────────────────────────
+
+function _set_all --description 'target, universal and private-server palette all at $argv[1]'
+    _fresh
+    _tmux_up
+    _tt "__terminal_theme_write (__terminal_theme_state_file target) $argv[1]; __terminal_theme_tmux $argv[1]; __terminal_theme_publish $argv[1]"
+end
+
+function _spoil --description 'replace state file $argv[1] with bad data of kind $argv[2]'
+    set -l f $argv[1]
+    mkdir -p (path dirname $f)
+    chmod u+rw $f 2>/dev/null
+    test -e $f; and trash $f
+    switch $argv[2]
+        case blue garbage
+            _put $f "$argv[2]\n"
+        case empty
+            _put $f ''
+        case two-lines
+            _put $f 'light\nx\n'
+        case padded
+            _put $f ' light \n'
+        case missing
+        case unreadable
+            _put $f 'light\n'
+            chmod 000 $f
+        case directory
+            mkdir $f
+    end
+end
+
+function _summary --description 'one line: target content and size, universal, palette'
+    set -l f (_target_file)
+    set -l t (__terminal_theme_read $f; or echo bad)
+    echo "target=$t size="(stat -c %s $f 2>/dev/null)" uvar="(_uvar)" palette="(_palette)
+end
+
+function _run --description 'run terminal_theme $argv in the temp env; print summary, warning and status'
+    set -l err (_tt "terminal_theme $argv" 2>&1 >/dev/null)
+    set -l st $status
+    set -l warned no
+    string match -q '*reset to dark*' -- $err; and set warned yes
+    echo (_summary)" warned=$warned status=$st"
+end
+
+@echo "terminal_theme: assignments"
+
+_fresh
+
+@test "light prints nothing" \
+    (count (_tt 'terminal_theme light' 2>&1)) = 0
+
+@test "light writes the target" \
+    (_tt 'terminal_theme light'; cat (_target_file)) = light
+
+@test "light publishes the universal" \
+    (_tt 'terminal_theme light'; _uvar) = light
+
+@test "dark writes the target and publishes" \
+    (_tt 'terminal_theme dark'; echo (cat (_target_file)) (_uvar)) = 'dark dark'
+
+@test "no argument prints the target" \
+    (_tt 'terminal_theme dark'; _tt terminal_theme) = dark
+
+_tmux_up
+
+@test "light recolors the tmux palette" \
+    (_tt 'terminal_theme light'; _palette) = light
+
+@test "dark recolors the tmux palette" \
+    (_tt 'terminal_theme dark'; _palette) = dark
+
+_tmux_down
+
+@test "with no tmux server an assignment still exits 0" \
+    (_tt 'terminal_theme light'; echo $status) = 0
+
+@test "with no tmux server the target is still written" \
+    (_tt 'terminal_theme dark'; cat (_target_file)) = dark
+
+@echo "terminal_theme: toggle and apply"
+
+_fresh
+
+@test "toggle light → dark" \
+    (_tt 'terminal_theme light; terminal_theme toggle'; cat (_target_file)) = dark
+
+@test "toggle dark → light" \
+    (_tt 'terminal_theme dark; terminal_theme toggle'; cat (_target_file)) = light
+
+@test "apply republishes a stale universal from the target" \
+    (_tt 'terminal_theme light; __terminal_theme_publish dark; terminal_theme apply'; _uvar) = light
+
+@echo "terminal_theme: reading bad target data is read-only"
+
+_fresh
+_spoil (_target_file) blue
+
+@test "no argument with a bad target prints nothing" \
+    (count (_tt terminal_theme 2>&1)) = 0
+
+@test "no argument with a bad target returns 1" \
+    (_tt terminal_theme; echo $status) = 1
+
+@test "no argument with a bad target leaves the file" \
+    (_tt terminal_theme; cat (_target_file)) = blue
+
+@echo "terminal_theme: bad target data is fixed to dark"
+
+for op in apply toggle
+    for kind in blue empty garbage two-lines padded missing unreadable
+        _set_all light
+        _spoil (_target_file) $kind
+        @test "$op fixes a $kind target to dark" \
+            (_run $op) = 'target=dark size=5 uvar=dark palette=dark warned=yes status=0'
+    end
+
+    # a directory can't be replaced without deleting it: refuse, change nothing
+    _set_all light
+    _spoil (_target_file) directory
+    @test "$op with a directory target fails and changes nothing" \
+        (_run $op) = 'target=bad size=4096 uvar=light palette=light warned=yes status=1'
+    @test "$op puts nothing inside a directory target" \
+        (count (_target_file)/*) = 0
+end
+
+@echo "terminal_theme system: bad system data changes nothing"
+
+for kind in blue empty garbage two-lines missing unreadable directory
+    _set_all light
+    _spoil (_system_file) $kind
+    set -l inode (stat -c %i (_target_file))
+    @test "system with a $kind system file leaves target, universal and palette" \
+        (_run system) = 'target=light size=6 uvar=light palette=light warned=no status=0'
+    @test "system with a $kind system file does not rewrite the target" \
+        (stat -c %i (_target_file)) = $inode
+    @test "system with a $kind system file prints nothing" \
+        (count (_tt 'terminal_theme system' 2>&1)) = 0
+end
+
+@test "system copies a dark system theme to the target" \
+    (_set_all light; _put (_system_file) 'dark\n'; _run system) = 'target=dark size=5 uvar=dark palette=dark warned=no status=0'
+
+@echo "terminal_theme: arguments"
+
+_fresh
+
+@test "a bad argument returns 2" \
+    (_tt 'terminal_theme blue' 2>/dev/null; echo $status) = 2
+
+@test "a bad argument prints usage on stderr" \
+    (_tt 'terminal_theme blue' 2>&1 >/dev/null | string match -q 'usage:*'; echo $status) = 0
+
+@test "a bad argument writes no target" \
+    (_tt 'terminal_theme blue' 2>/dev/null; test -e (_target_file); echo $status) = 1
+
+@test "two arguments return 2" \
+    (_tt 'terminal_theme light dark' 2>/dev/null; echo $status) = 2
+
 _teardown
