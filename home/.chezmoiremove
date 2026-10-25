@@ -1,3 +1,4 @@
 .config/fish/conf.d/fisher_chezmoi_sync.fish
 .config/fish/conf.d/zoxide.fish
 .config/fish/functions/__terminal_theme_set.fish
+.config/tmux/scripts/tmux-theme-sync.sh
