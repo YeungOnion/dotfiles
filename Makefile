@@ -1,4 +1,4 @@
-.PHONY: test-orchestration test-integration test-unit test-container test-smoke
+.PHONY: test-orchestration test-integration test-unit test-container test-smoke test-deps
 
 SMOKE_IMAGE := chezmoi-smoke
 SMOKE_SRC   := /home/testuser/.local/share/chezmoi
@@ -35,6 +35,10 @@ test-unit:
 # Writes to the source and ~/.config: each test file refuses to run outside the smoke container.
 test-container:
 	fish -c 'fishtape tests/fish/container/*.fish tests/fish/fisher_cold_install_test.fish'
+
+# External dependency behavior (starts claude, which updates ~/.claude.json counters): run by hand.
+test-deps:
+	fish -c 'fishtape tests/fish/deps/*.fish'
 
 test-smoke:
 	DOCKER_BUILDKIT=1 docker build --target smoke -t $(SMOKE_IMAGE) .

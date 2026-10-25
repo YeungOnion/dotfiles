@@ -44,6 +44,18 @@ function __terminal_theme_vivid_name -a theme
     end
 end
 
+# Pure: Claude Code theme name for light|dark, respects CLAUDE_THEME_LIGHT/CLAUDE_THEME_DARK
+# overrides. Claude Code has no theme env var; functions/claude.fish passes it per
+# launch with --settings.
+function __terminal_theme_claude_name -a theme
+    switch $theme
+        case light
+            set -q CLAUDE_THEME_LIGHT && echo $CLAUDE_THEME_LIGHT || echo light
+        case dark
+            set -q CLAUDE_THEME_DARK && echo $CLAUDE_THEME_DARK || echo dark
+    end
+end
+
 # Effect: apply BAT_THEME and LS_COLORS whenever terminal_theme changes
 function __terminal_theme_apply --on-variable terminal_theme
     switch $terminal_theme

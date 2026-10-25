@@ -89,3 +89,71 @@ set -ge VIVID_THEME_LIGHT; set -ge VIVID_THEME_DARK
 
 @test "apply does nothing for unknown terminal_theme" \
     (set -g terminal_theme light; set -g BAT_THEME before; set -g terminal_theme unknown; echo $BAT_THEME) = before
+
+@echo "claude theme name mapping"
+
+@test "claude name for light falls back to light" \
+    (set -ge CLAUDE_THEME_LIGHT; __terminal_theme_claude_name light) = light
+
+@test "claude name for dark falls back to dark" \
+    (set -ge CLAUDE_THEME_DARK; __terminal_theme_claude_name dark) = dark
+
+@test "claude name for light returns CLAUDE_THEME_LIGHT when set" \
+    (set -g CLAUDE_THEME_LIGHT light-daltonized; __terminal_theme_claude_name light) = light-daltonized
+
+@test "claude name for dark returns CLAUDE_THEME_DARK when set" \
+    (set -g CLAUDE_THEME_DARK dark-ansi; __terminal_theme_claude_name dark) = dark-ansi
+
+@test "claude name for anything else is empty" \
+    (count (__terminal_theme_claude_name unknown)) = 0
+
+set -ge CLAUDE_THEME_LIGHT; set -ge CLAUDE_THEME_DARK
+
+# ── claude wrapper: theme per launch via --settings ──────────────────────────
+
+@echo "claude wrapper"
+
+source (status dirname)/helpers/terminal_theme_env.fish
+
+# a stub that prints its arguments; the real claude must never run here
+mkdir -p $_root/bin
+printf '#!/bin/sh\nfor a in "$@"; do printf "%%s\\n" "$a"; done\n' >$_root/bin/claude
+chmod +x $_root/bin/claude
+set -g _stub "set -x PATH $_root/bin \$PATH;"
+
+function _claude_args --description 'run the wrapper on hello world in the temp env, args on one line'
+    _tt "$_stub $argv[1] claude hello world" | string join ' '
+end
+
+set -g _resolves (_tt "$_stub command -v claude")
+
+@test "the stub claude resolves first" \
+    "$_resolves" = $_root/bin/claude
+
+if test "$_resolves" = $_root/bin/claude
+    _fresh
+    @test "with no theme published there is no --settings" \
+        (_claude_args '') = 'hello world'
+
+    _tt 'terminal_theme light'
+    @test "with light published the theme is passed first" \
+        (_claude_args '') = '--settings {"theme":"light"} hello world'
+
+    _tt 'terminal_theme dark'
+    @test "with dark published the theme is passed first" \
+        (_claude_args '') = '--settings {"theme":"dark"} hello world'
+
+    @test "an override name is passed" \
+        (_claude_args 'set -x CLAUDE_THEME_DARK dark-ansi;') = '--settings {"theme":"dark-ansi"} hello world'
+
+    @test "an override that would break the JSON is not passed" \
+        (_claude_args 'set -x CLAUDE_THEME_DARK \'x"y\';' 2>/dev/null) = 'hello world'
+
+    @test "an override that would break the JSON is reported" \
+        (_tt "$_stub set -x CLAUDE_THEME_DARK 'x\"y'; claude hello" 2>&1 >/dev/null | string match -q '*x"y*'; echo $status) = 0
+else
+    @echo "skipped wrapper tests: the stub does not resolve first"
+end
+
+unlink $_root/bin/claude 2>/dev/null
+_teardown
