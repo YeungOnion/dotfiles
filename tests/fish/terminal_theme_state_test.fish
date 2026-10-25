@@ -90,4 +90,63 @@ mkdir -p $_d
 @test "write explains the refusal on stderr" \
     (__terminal_theme_write $_d light 2>&1 >/dev/null | string match -q '*directory*'; echo $status) = 0
 
+# ── effects: tmux palette by switch, the only universal writer ────────────────
+
+@echo "tmux palette"
+
+_fresh
+_tmux_up
+
+@test "light sources the light palette" \
+    (_tt '__terminal_theme_tmux light'; _palette) = light
+
+@test "dark sources the dark palette" \
+    (_tt '__terminal_theme_tmux dark'; _palette) = dark
+
+# plant conf files where a path built from the value could land; none may run
+for p in $_root/x.conf $_root/cfg/x.conf $_root/cfg/tmux/x.conf
+    echo 'set -g @pwned yes' >$p
+end
+
+@test "a path-like theme is refused with status 1" \
+    (_tt '__terminal_theme_tmux ../../../x' 2>/dev/null; echo $status) = 1
+
+@test "a path-like theme is never sourced" \
+    (_tt '__terminal_theme_tmux ../../../x' 2>/dev/null; _tmux show -gqv @pwned; echo end) = end
+
+@test "a refused theme is explained on stderr" \
+    (_tt '__terminal_theme_tmux blue' 2>&1 >/dev/null | string match -q '*blue*'; echo $status) = 0
+
+_tmux_down
+
+@test "no tmux server: exit 0, nothing printed" \
+    (_tt '__terminal_theme_tmux light' 2>&1; echo $status) = 0
+
+@test "no tmux server: no server is started" \
+    (_tt '__terminal_theme_tmux light'; _tmux has-session 2>/dev/null; echo $status) = 1
+
+@echo "publish: the only writer of the terminal_theme universal"
+
+_fresh
+
+@test "publish light sets the universal" \
+    (_tt '__terminal_theme_publish light'; _uvar) = light
+
+@test "publish dark sets the universal" \
+    (_tt '__terminal_theme_publish dark'; _uvar) = dark
+
+@test "publish refuses other values with status 1" \
+    (_tt '__terminal_theme_publish blue'; echo $status) = 1
+
+@test "a refused publish leaves the universal" \
+    (_tt '__terminal_theme_publish dark; __terminal_theme_publish blue'; _uvar) = dark
+
+set -g _count 'set -g n 0; function _c --on-variable terminal_theme; set -g n (math $n + 1); end'
+
+@test "publishing the current value fires no --on-variable handler" \
+    (_tt '__terminal_theme_publish dark'; _tt "$_count; __terminal_theme_publish dark; echo \$n") = 0
+
+@test "publishing a new value fires the handler once" \
+    (_tt '__terminal_theme_publish dark'; _tt "$_count; __terminal_theme_publish light; echo \$n") = 1
+
 _teardown
