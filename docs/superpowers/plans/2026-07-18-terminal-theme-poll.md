@@ -1,5 +1,7 @@
 # Terminal Theme Poll (systemd timer) Implementation Plan
 
+> **Superseded in part (2026-10-24):** the poller no longer writes the `terminal_theme` universal. It records only the system state file; see `2026-10-24-terminal-theme-target-state.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the `fish_prompt`-triggered Windows-registry poll (which blocks every interactive prompt for ~80-90ms via WSL interop process spawn) with a systemd `--user` timer that polls independently of the interactive shell and pushes changes straight into the existing `terminal_theme` universal variable.

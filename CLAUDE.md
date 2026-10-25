@@ -95,6 +95,8 @@ a repo problem: do not pin `umask` in chezmoi config.
   them with `chmod` to what the source implies (644 files, 755 for `executable_` files and
   directories, 600/700 for `private_`) after confirming the diff is mode-only. If which
   mode is right is unclear, list the files and ask the user instead.
+- Run `make test-unit` as `umask 022; make test-unit`: under 0002 the diff checks in
+  `fisher_chezmoi_test` and `fish_paths_test` fail on mode-only diffs.
 
 ## Local config changes need `chezmoi init` on each machine
 
@@ -204,7 +206,39 @@ Testing tasks:
 - `vectordotdev/brew` only ships macOS binaries; on Linux its formula is HEAD-only (a full
   Rust build), and homebrew-core has no `vector`. vector is a manual install per machine.
 
+## terminal theme: target, system, applied
+
+| State | Where | Written by |
+|---|---|---|
+| target | `~/.local/state/terminal-theme/target` (`$XDG_STATE_HOME`) | `terminal_theme light\|dark\|toggle\|apply\|system`, the `cc` abbr |
+| system | `…/terminal-theme/system` | the reg.exe poller only (`__terminal_theme_poll_sync`) |
+| applied | universal `terminal_theme`, tmux `@thm_*` palette | `__terminal_theme_assign` only |
+
+- Change the theme with `terminal_theme`, never `set -U terminal_theme`: only
+  `__terminal_theme_publish` writes that universal (a poll test enforces it). Shells derive
+  BAT_THEME/LS_COLORS from it; the `claude` wrapper derives `--settings '{"theme":…}'`
+  (Claude Code has no theme env var; `make test-deps` checks the flag, by hand).
+- State values are only ever `switch`ed on (`__terminal_theme_read` accepts exactly
+  `light`/`dark`), never interpolated into a path. toggle/apply reset a bad target to dark;
+  a bad or missing system file changes nothing. Plain `terminal_theme` (print) is read-only.
+- tmux `theme.conf` runs `terminal_theme apply` at server start and on reload. A running
+  server is detected with `show-options`: `has-session` fails during that config load (no
+  session yet), and the socket file outlives `kill-server`.
+- `create_target` seeds dark. Deleting it after it changed makes `chezmoi apply` ask "has
+  changed since chezmoi last wrote it" instead of re-creating it; terminal_theme treats the
+  missing file as bad data.
+- Tests use `tests/fish/helpers/terminal_theme_env.fish` (temp XDG root, private tmux
+  server). Keep its root under `/tmp` (`mktemp -d`): tmux socket paths over ~108 bytes fail
+  with `File name too long`.
+
 ## fish/fishtape gotchas
+
+- `set` passes the previous `$status` through: `test …; or set …` returns the failed
+  test's 1 even when `set` succeeds. Use `if … end`. Likewise a `switch` whose value came
+  from a failed command substitution and matches no case returns that failure; add
+  `case '*'` with an explicit `return 0` when "no match" is success.
+- `chezmoi apply <dest>/a/b/file` fails (`stat …: no such file or directory`) when the
+  destination lacks `a/b`; apply the top directory instead.
 
 - `trash` (cargo, 1.0.0) follows symlinks: on a dangling one it reports
   `No such file or directory`. A dangling link holds no data; `unlink` it.
