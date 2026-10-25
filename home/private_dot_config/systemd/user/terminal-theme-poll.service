@@ -1,5 +1,5 @@
 [Unit]
-Description=Poll Windows registry for light/dark theme, push into fish terminal_theme uvar
+Description=Record the Windows light/dark theme as terminal-theme system state
 
 [Service]
 Type=oneshot
