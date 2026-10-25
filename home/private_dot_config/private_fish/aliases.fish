@@ -10,11 +10,12 @@ abbr --add tree --position command tree --gitignore
 abbr --add glow --position command glow --pager
 abbr --add ardo --position command arduino-cli
 abbr --add mux --position command tmuxinator
-# persistent claude on desktop; creates cc if gone. $terminal_theme expands on the
-# client at run time, so the host's terminal_theme follows the terminal you're on.
+# persistent claude on desktop; creates cc if gone. $(terminal_theme) reads the
+# client's target when cc runs, so the host's target follows the terminal you're on.
 # The host's fish parses the string: escape the value so it arrives as one literal
-# argument (quoted, or an unset value makes string escape read stdin).
-abbr --add cc --position command 'ssh -t blizzard-vjff9dr-wsl "terminal_theme $(string escape -- "$terminal_theme"); tmux new-session -A -s cc"'
+# argument (quoted, or a bad target, which prints nothing, makes string escape read
+# stdin). A bad target sends '', which only prints the host's target.
+abbr --add cc --position command 'ssh -t blizzard-vjff9dr-wsl "terminal_theme $(string escape -- "$(terminal_theme)"); tmux new-session -A -s cc"'
 
 alias du 'du -h'
 alias mkdir 'mkdir -p'

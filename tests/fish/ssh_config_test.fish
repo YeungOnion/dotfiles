@@ -87,13 +87,36 @@ set -g _cc_abbr (fish --no-config -c "source $_repo_root/home/private_dot_config
 @test "cc abbr targets the ssh config's Host" \
     (string match -q "*ssh -t $_host *tmux new-session -A -s cc*" -- $_cc_abbr; and echo yes; or echo no) = yes
 
-# single-quoted in the abbr, so $terminal_theme expands on the client when cc runs
-@test "cc abbr forwards the client's terminal_theme unexpanded" \
-    (string match -q '*"terminal_theme $(string escape -- "$terminal_theme"); tmux*' -- $_cc_abbr; and echo yes; or echo no) = yes
+# single-quoted in the abbr, so the client's target is read on the client when cc runs
+@test "cc abbr forwards the client's target, unexpanded" \
+    (string match -q '*"terminal_theme $(string escape -- "$(terminal_theme)"); tmux*' -- $_cc_abbr; and echo yes; or echo no) = yes
 
 # the host's fish parses the forwarded string: a hostile value must stay one literal argument
 @test "forwarded terminal_theme cannot inject commands on the host" \
-    (set -l terminal_theme 'light; echo PWNED'
-     fish --no-config -c "function terminal_theme; echo \$argv; end; terminal_theme $(string escape -- "$terminal_theme")") = 'light; echo PWNED'
+    (function terminal_theme; echo 'light; echo PWNED'; end
+     fish --no-config -c "function terminal_theme; echo \$argv; end; terminal_theme $(string escape -- "$(terminal_theme)")"
+     functions -e terminal_theme) = 'light; echo PWNED'
 
 trash $_tmp
+
+# ── the remote command, expanded the way the client's fish will ───────────────
+
+source (status dirname)/helpers/terminal_theme_env.fish
+
+# the double-quoted remote command from the abbr, run through echo on the client side
+set -g _remote (string match -rg '"(terminal_theme .*)"\'?$' -- $_cc_abbr)
+printf 'echo "%s"\n' $_remote >$_root/expand.fish
+
+@test "the abbr has a remote command" \
+    (count $_remote) = 1
+
+_fresh
+_tt 'terminal_theme light'
+@test "a client targeting light sends terminal_theme light" \
+    (_tt "source $_root/expand.fish") = 'terminal_theme light; tmux new-session -A -s cc'
+
+_put (_target_file) 'blue\n'
+@test "a client with a bad target sends an empty argument, which only prints" \
+    (_tt "source $_root/expand.fish") = "terminal_theme ''; tmux new-session -A -s cc"
+
+_teardown
