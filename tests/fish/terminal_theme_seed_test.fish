@@ -29,6 +29,11 @@ end
 @test "the state directory is private (700)" \
     (stat -c %a (path dirname $_target)) = 700
 
+# ~/.local/state holds other tools' state (claude, gh, …) at 700; a plain dot_local/state
+# source dir would make chezmoi chmod it to 755
+@test "~/.local/state is kept private (700)" \
+    (stat -c %a $_dest/.local/state) = 700
+
 @test "a later apply keeps a changed target" \
     (printf 'light\n' >$_target; _apply; cat $_target) = light
 

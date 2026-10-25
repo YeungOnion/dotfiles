@@ -224,6 +224,8 @@ Testing tasks:
 - tmux `theme.conf` runs `terminal_theme apply` at server start and on reload. A running
   server is detected with `show-options`: `has-session` fails during that config load (no
   session yet), and the socket file outlives `kill-server`.
+- The source path is `dot_local/private_state/…`: `~/.local/state` holds other tools' state
+  at 700, and a plain `state` source dir makes chezmoi chmod it to 755.
 - `create_target` seeds dark. Deleting it after it changed makes `chezmoi apply` ask "has
   changed since chezmoi last wrote it" instead of re-creating it; terminal_theme treats the
   missing file as bad data.
