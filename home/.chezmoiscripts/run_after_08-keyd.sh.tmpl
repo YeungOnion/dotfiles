@@ -1,0 +1,46 @@
+{{ if and (eq .chezmoi.os "linux") (not (contains "microsoft" (lower .chezmoi.kernel.osrelease))) -}}
+#!/bin/bash
+set -eufo pipefail
+
+# Caps Lock: Ctrl when held or chorded, Esc when tapped (config: .chezmoitemplates/keyd-default.conf).
+# Native Linux only: under WSL, Windows owns the keyboard; renders empty there (and off Linux),
+# so chezmoi skips it. keyd reads only /etc/keyd, which chezmoi cannot target, hence this copy.
+# run_after_ (every apply): it checks the state without sudo and escalates only on drift, so a
+# skipped run is retried next apply instead of being recorded as done.
+
+src={{ joinPath .chezmoi.sourceDir ".chezmoitemplates" "keyd-default.conf" | quote }}
+conf=/etc/keyd/default.conf
+
+# Debian/Ubuntu ship the binary as keyd.rvaiya (the name keyd is taken by another package).
+find_keyd() { command -v keyd || command -v keyd.rvaiya; }
+
+need_install=0; need_conf=0; need_service=0
+find_keyd &>/dev/null || need_install=1
+cmp -s "$src" "$conf" || need_conf=1
+systemctl is-enabled --quiet keyd 2>/dev/null && systemctl is-active --quiet keyd 2>/dev/null || need_service=1
+[ $((need_install + need_conf + need_service)) -eq 0 ] && exit 0
+
+if ! command -v systemctl &>/dev/null || [ ! -d /run/systemd/system ]; then
+    echo "⏭ keyd: no running systemd, skipping" >&2
+    exit 0
+fi
+# sudo prompts on the terminal; without one (or cached credentials) it cannot ask.
+if ! sudo -n true 2>/dev/null && [ ! -t 2 ]; then
+    echo "⚠ keyd needs changes but sudo has no terminal: run chezmoi apply --include=scripts from one" >&2
+    exit 0
+fi
+
+if [ "$need_install" -eq 1 ]; then
+    if ! command -v apt-get &>/dev/null; then
+        echo "⚠ keyd is not installed and there is no apt-get: install it, then re-run chezmoi apply" >&2
+        exit 0
+    fi
+    echo 'keyd: may prompt for install via `apt`'
+    sudo apt-get install -y keyd
+fi
+[ "$need_conf" -eq 1 ] && sudo install -D -m 644 "$src" "$conf"
+echo 'keyd: may prompt for activation via `systemctl`'
+sudo systemctl enable --now keyd
+[ "$need_conf" -eq 1 ] && sudo "$(find_keyd)" reload
+exit 0
+{{ end -}}
