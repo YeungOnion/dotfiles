@@ -126,12 +126,19 @@ Answering no later does not disable an already-enabled service.
 
 ## keyd: root-owned config, native Linux only
 
-Caps Lock → Ctrl (held/chorded) / Esc (tapped) is `run_onchange_after_08-keyd`, not a
-deployed file: keyd reads only `/etc/keyd`, so the script embeds the config and writes it
-with sudo. It renders empty off Linux and under WSL (`.chezmoi.kernel.osrelease` contains
-`microsoft`, either case). Tap threshold: `keyd_tap_ms` under `[data]` in the local
-chezmoi.toml (default 200). Ubuntu ships the binary as `keyd.rvaiya`, so the script never assumes a `keyd` command. It skips with a ⏭ line when sudo has no terminal, so run
-`chezmoi apply --include=scripts` from a real terminal, not an agent shell.
+Caps Lock → Ctrl (held/chorded) / Esc (tapped). keyd reads only `/etc/keyd`, which chezmoi
+cannot target, so the config is a plain file, `home/.chezmoitemplates/keyd-default.conf`
+(never deployed to `~`), and `run_after_08-keyd` copies it with `sudo install`. The tap
+threshold is `overload_tap_timeout` in that file. Use `overload(control, esc)`, not
+`overloadt`: `overloadt` delays the layer by its timeout, so a fast chord loses its Ctrl.
+- It renders empty off Linux and under WSL (`.chezmoi.kernel.osrelease` contains
+  `microsoft`, either case).
+- `run_after_` (not `run_onchange_`): it checks install, config and service state without
+  sudo and escalates only on drift. A `run_onchange_` script that skips with exit 0 is
+  recorded as done and never retried.
+- Without a terminal for sudo it prints a ⚠ line and exits 0; run
+  `chezmoi apply --include=scripts` from a real terminal, not an agent shell.
+- Ubuntu ships the binary as `keyd.rvaiya`, so the script never assumes a `keyd` command.
 
 ## fish version: Homebrew 4.x only
 
