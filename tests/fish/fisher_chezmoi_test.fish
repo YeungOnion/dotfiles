@@ -46,7 +46,7 @@ set -l _plugins_script $_chezmoi_src/.chezmoiscripts/run_onchange_after_06-fish-
 
 # Run the rendered fish heredoc with fisher stubbed: `fisher update` exits 0 even
 # when a download fails, so the script itself must notice a missing plugin.
-set -l _plugins_fish (chezmoi execute-template < $_plugins_script 2>/dev/null | sed -n "/<<'FISH'/,/^FISH\$/p" | sed '1d;$d' | string collect)
+set -g _plugins_fish (chezmoi execute-template < $_plugins_script 2>/dev/null | sed -n "/<<'FISH'/,/^FISH\$/p" | sed '1d;$d' | string collect)
 set -l _data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}{{ "\n" }}{{ end }}')
 
 @test "fish-plugins script fails when a listed plugin is missing" \
@@ -67,6 +67,21 @@ set -l _data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}
     (set -l h (mktemp -d)
      set -l out (chezmoi execute-template < $_plugins_script 2>/dev/null | sed 's|^fish_bin=.*|fish_bin=/bin/false|' | HOME=$h bash 2>&1 | string collect)
      trash $h; string match -q '*is stale*' -- $out; and echo refused; or echo ran) = refused
+
+function _run_plugins_fish --description 'run the script fish part in a temp config dir; argv: recorded plugins'
+    set -l h (mktemp -d)
+    mkdir -p $h/fish/functions $h/fish/completions
+    touch $h/fish/functions/fisher.fish $h/fish/completions/fisher.fish
+    XDG_CONFIG_HOME=$h fish --no-config -c "function fisher; end; set -g _fisher_plugins \$argv; $_plugins_fish" $argv >/dev/null 2>&1
+    test -e $h/fish/functions/fisher.fish; and echo kept; or echo removed
+    trash $h
+end
+
+@test "fish-plugins script drops unrecorded fisher.fish so fisher can install itself" \
+    (_run_plugins_fish) = removed
+
+@test "fish-plugins script keeps fisher.fish once fisher has recorded itself" \
+    (_run_plugins_fish jorgebucaran/fisher) = kept
 
 set -l _install_script $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl
 @test "install-packages script no longer touches fisher" \

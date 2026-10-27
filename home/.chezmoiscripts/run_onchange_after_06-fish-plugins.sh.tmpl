@@ -25,6 +25,16 @@ if not functions -q fisher
     curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
     functions -q fisher; or exit 1
 end
+{{ $lower := list -}}
+{{ range .fish_plugins }}{{ $lower = append $lower (lower .) }}{{ end -}}
+{{ if has "jorgebucaran/fisher" $lower -}}
+# fisher lists itself so it can self-update, but it refuses to install over fisher.fish files
+# missing from its record (left by an earlier bootstrap). The loaded function is already in
+# memory, so drop the orphans and let `fisher update` reinstall and record them.
+if not contains -- jorgebucaran/fisher (string lower -- $_fisher_plugins)
+    command rm -f $__fish_config_dir/functions/fisher.fish $__fish_config_dir/completions/fisher.fish
+end
+{{ end -}}
 fisher update
 # fisher update exits 0 when a single download fails; confirm every listed plugin landed
 {{ range .fish_plugins -}}
