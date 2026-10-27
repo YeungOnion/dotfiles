@@ -58,6 +58,16 @@ set -l _data_plugins (chezmoi execute-template '{{ range .fish_plugins }}{{ . }}
 @test "fish-plugins bootstrap fails fast when curl fails" \
     (string match -q '*curl -fsSL*' < $_plugins_script; and string match -q '*functions -q fisher; or exit 1*' < $_plugins_script; and echo yes; or echo no) = yes
 
+@test "fish-plugins script refuses a stale fish_plugins before running fisher" \
+    (set -l h (mktemp -d); mkdir -p $h/.config/fish; printf 'jorgebucaran/fishtape\n' > $h/.config/fish/fish_plugins
+     set -l out (chezmoi execute-template < $_plugins_script 2>/dev/null | sed 's|^fish_bin=.*|fish_bin=/bin/false|' | HOME=$h bash 2>&1 | string collect)
+     trash $h; string match -q '*is stale*' -- $out; and echo refused; or echo ran) = refused
+
+@test "fish-plugins script refuses a missing fish_plugins" \
+    (set -l h (mktemp -d)
+     set -l out (chezmoi execute-template < $_plugins_script 2>/dev/null | sed 's|^fish_bin=.*|fish_bin=/bin/false|' | HOME=$h bash 2>&1 | string collect)
+     trash $h; string match -q '*is stale*' -- $out; and echo refused; or echo ran) = refused
+
 set -l _install_script $_chezmoi_src/.chezmoiscripts/run_onchange_02-install-packages.sh.tmpl
 @test "install-packages script no longer touches fisher" \
     (test -f $_install_script; and not string match -q '*fisher*' < $_install_script; and echo clean; or echo dirty) = clean

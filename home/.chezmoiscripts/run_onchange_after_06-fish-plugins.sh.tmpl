@@ -10,6 +10,15 @@ fish_bin={{ or (lookPath "fish") "/opt/homebrew/bin/fish" }}
 fish_bin={{ or (lookPath "fish") "/home/linuxbrew/.linuxbrew/bin/fish" }}
 {{ end -}}
 
+# `fisher update` syncs to the deployed file, removing plugins it lacks. When this script runs
+# without the file (`chezmoi apply --include=scripts`), refuse rather than act on a stale list.
+plugins_file="$HOME/.config/fish/fish_plugins"
+want=({{ range .fish_plugins }}{{ . | quote }} {{ end }})
+if [ "$(cat "$plugins_file" 2>/dev/null)" != "$(printf '%s\n' "${want[@]}")" ]; then
+    echo "fisher: $plugins_file is stale; run 'chezmoi apply $plugins_file' first" >&2
+    exit 1
+fi
+
 "$fish_bin" <<'FISH'
 if not functions -q fisher
     # `| source` returns source's status (0 on empty input), so check the result
