@@ -20,6 +20,7 @@ test-unit:
 	         tests/fish/terminal_theme_seed_test.fish \
 	         tests/fish/tmux_theme_test.fish \
 	         tests/fish/cc_host_test.fish \
+	         tests/fish/keyd_test.fish \
 	         tests/fish/scratch_test.fish \
 	         tests/fish/chezmoi_data_test.fish \
 	         tests/fish/data_edit_test.fish \

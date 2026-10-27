@@ -124,6 +124,15 @@ even over an old answer). Only on a cc host is
 linger is off or the Windows `WSL keepalive` task is missing (it never creates the task).
 Answering no later does not disable an already-enabled service.
 
+## keyd: root-owned config, native Linux only
+
+Caps Lock → Ctrl (held/chorded) / Esc (tapped) is `run_onchange_after_08-keyd`, not a
+deployed file: keyd reads only `/etc/keyd`, so the script embeds the config and writes it
+with sudo. It renders empty off Linux and under WSL (`.chezmoi.kernel.osrelease` contains
+`microsoft`, either case). Tap threshold: `keyd_tap_ms` under `[data]` in the local
+chezmoi.toml (default 200). Ubuntu ships the binary as `keyd.rvaiya`, so the script never assumes a `keyd` command. It skips with a ⏭ line when sudo has no terminal, so run
+`chezmoi apply --include=scripts` from a real terminal, not an agent shell.
+
 ## fish version: Homebrew 4.x only
 
 fish comes from Homebrew (`fish` in `brew_packages`), at
